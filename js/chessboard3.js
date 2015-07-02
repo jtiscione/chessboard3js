@@ -1690,6 +1690,7 @@
                             doDrawing();
                         }
                     };
+                    keepWaiting();
                 }
             };
 
