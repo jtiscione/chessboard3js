@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="Chess, Chessboard, Javascript, Play Chess, Javascript Chess, three.js, chessboard.js, chessboard3.js">
+    <title>chessboard3.js</title>
+
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon" />
+
+    <link type="text/css" rel="stylesheet" href="css/site.css">
+    <link type="text/css" rel="stylesheet" href="css/docs.css">
+    <link type="text/css" rel="stylesheet" href="css/prettyprint.css">
+
+    <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="js/prettify.js"></script>
+</head>
+<body onload="prettyPrint()">
+<header id="header">
+    <h1>chessboard3.js</h1>
+    <nav>
+        <ul>
+            <li><a href="index.html"><input type="button" class="blueButton" value="Home"></a></li>
+            <li><a href="docs.html"><input type="button" class="blueButton" value="Documentation"></a></li>
+            <li><a href="play.html"><input type="button" class="blueButton" value="Play"></a></li>
+            <li><a href="releases/0.1.0/chessboard3js-0.1.0.zip"><input type="button" class="blueButton" value="Download"></a></li>
+        </ul>
+    </nav>
+</header>
+<div class="banner">
+    <p>This is mostly the same API as <a href="http://chessboardjs.com">chessboard.js</a>, and it is well documented with examples there.</p>
+    <p>Differences between chessboard3.js are highlighted below.</p>
+</div>
+<article>
+    <h2>Configuration</h2>
+    <p>Most of the time, you will pass a configuration object to the ChessBoard3 constructor:</p>
+    <div style="margin-left:200px;margin-right:200px"><pre class="prettyprint">var board = new ChessBoard3('some_div_id', config);</pre></div>
+    <p>The <span>config</span> object can have the following properties and methods:</p>
+    <table>
+        <tr>
+            <th>
+                Property
+            </th>
+            <th>
+                Type
+            </th>
+            <th>
+                Default value
+            </th>
+            <th>
+                Description
+            </th>
+        </tr>
+        <tr>
+            <td>
+                <span>draggable</span>
+            </td>
+            <td>
+                <span>boolean</span>
+            </td>
+            <td>
+                <span>false</span>
+            </td>
+            <td>
+                If set to <span>true</span>, the user can drag pieces to other squares or off the board.<br>
+                Default value of <span>false</span> makes a "read-only" board that restricts control of the board position to code.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>dropOffBoard</span>
+            </td>
+            <td>
+                <span>'snapback'</span> or <span>'trash'</span>
+            </td>
+            <td>
+                <span>'snapback'</span>
+            </td>
+            <td>
+                If set to <span>'trash'</span>, the user can drag pieces off the board to get rid of them.<br>
+                Otherwise, <span>'snapback'</span> makes those pieces snap back to their original square.<br>
+                Using <span>'trash'</span> generally makes no sense unless <span>'sparePieces'</span> is set to <span>true</span>.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>orientation</span>
+            </td>
+            <td>
+                <span>'white'</span> or <span>'black'</span>.
+            </td>
+            <td>
+                <span>'white'</span>
+            </td>
+            <td>
+                This specifies the initial orientation of the board.<br>
+                (This is actually implemented by changing the camera position.)
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">pieceSet</span>
+            </td>
+            <td>
+                <span>string</span> or <span>function</span>
+            </td>
+            <td>
+                <span>'assets/chesspieces/wikipedia/{piece}.json'</span>
+            </td>
+            <td>
+                A template string for the URL of the piece mesh files, where <span>'{piece}'</span> gets replaced by <span>'K'</span>, <span>'Q'</span>, <span>'R'</span>, <span>'B'</span>, or <span>'P'</span>.<br/>
+                <p>This setting is specific to chessboard3.js. The JSON files required are K.json, Q.json, R.json, B.json, N.json, and P.json, and each specifies the geometry of one type of piece, regardless of color, in three.js format.</p>
+                <p>In chessboard.js the analogous setting is <span class="highlight">pieceTheme</span> for specifying the location of 12 image files- 'wK.png', 'bQ.png', etc.)
+                    A configuration object can have both of these set; chessboard.js will ignore one and chessboard3.js will ignore the other.</p>
+                <p>If <span>pieceSet</span> is a function, the only argument is a one character piece code. The function should return a URL
+                    to the JSON file.</p>
+                <p>The only piece set available right now is "wikipedia", which is a spoof of the piece images on Wikipedia. (This is a result of my initial attempts at Blender.)</p>
+                <p>NOTE: At present chessboard3.js only loads mesh geometries from the JSON files, without any added textures. It then slaps white and black PhongMaterials on
+                the geometries to create the meshes.</p>
+                <p>The bounding box for a piece mesh should be restricted to [-0.5, 0.5] for x and y; the board itself lies on the z=0 plane.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>position</span>
+            </td>
+            <td>
+                <span>String</span>
+            </td>
+            <td>
+                <span>''</span> (i.e., empty board)
+            </td>
+            <td>
+                The initial position of the board as a FEN string.<br>
+                Accepts <span>'start'</span> as an alias for the starting FEN <span>'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>position</span>
+            </td>
+            <td>
+                <span>Object</span>
+            </td>
+            <td>
+                N/A
+            </td>
+            <td>
+                The initial position of the board specified in chessboard.js format.<br>
+                The object would typically look like this:<br>
+                <span>{ a4: 'wK', c4: 'bK', a7: 'wR'}</span>
+                Keys are squares (<span>'a1'</span> through <span>'a8'</span>, <span>'h1'</span> through <span>'h8'</span>, etc.)
+                Values are piece abbreviations such as <span>'wK'</span> for white knight or <span>'bP'</span> for black pawn.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">rotateControls</span>
+            </td>
+            <td>
+                boolean
+            </td>
+            <td>
+                true
+            </td>
+            <td>
+                If set, the user can rotate the board around on its axis, unless OrbitControls.js has not been loaded.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>showNotation</span>
+            </td>
+            <td>
+                <span>boolean</span>
+            </td>
+            <td>
+                <span>true</span>
+            </td>
+            <td>
+                Determines whether files and ranks are labeled (files a through h, ranks 1 through 8)<br/>
+                If set to <span>true</span> and <span>helvetiker_regular.typeface.js</span> has not been loaded, chessboard3.js will report an error and continue.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>sparePieces</span>
+            </td>
+            <td>
+                boolean
+            </td>
+            <td>
+                false
+            </td>
+            <td>
+                If set to <span>true</span>, pieces appear next to the board that can be dragged onto it.<br>
+                If <span>sparePieces</span> is set to true, <span>draggable</span> gets set to <span>true</span>.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">zoomControls</span>
+            </td>
+            <td>
+                boolean
+            </td>
+            <td>
+                false
+            </td>
+            <td>
+                If set, the user can zoom using the middle mouse button or scroll wheel, unless OrbitControls.js has not been loaded.<br>
+                This is great for screenshots, but it's disabled by default because the dolly controls in OrbitControls.js are so clunky.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">backgroundColor</span>
+            </td>
+            <td>
+                <span>Number</span>
+            </td>
+            <td>
+                <span>0xBBBBBB</span>
+            </td>
+            <td>
+                Background color of the redering window.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">whitePieceColor</span>
+            </td>
+            <td>
+                <span>Number</span>
+            </td>
+            <td>
+                <span>0xAAAAAA</span>
+            </td>
+            <td>
+                Color of White's pieces.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">whiteSpecularColor</span>
+            </td>
+            <td>
+                <span>Number</span>
+            </td>
+            <td>
+                <span>0xCCFFFF</span>
+            </td>
+            <td>
+                Specular color (for phong reflections) of White's pieces.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">blackPieceColor</span>
+            </td>
+            <td>
+                <span>Number</span>
+            </td>
+            <td>
+                <span>0x333333</span>
+            </td>
+            <td>
+                Color of Black's pieces.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">blackSpecularColor</span>
+            </td>
+            <td>
+                <span>Number</span>
+            </td>
+            <td>
+                <span>0x553333</span>
+            </td>
+            <td>
+                Specular color (for phong reflections) of Black's pieces.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">notationColor</span>
+            </td>
+            <td>
+                <span>Number</span>
+            </td>
+            <td>
+                <span>0x000000</span>
+            </td>
+            <td>
+                Color of the notation labels.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>appearSpeed</span>
+            </td>
+            <td>
+                <span>Number</span> or <span>'slow'</span> or <span>'fast'</span>
+            </td>
+            <td>
+                200
+            </td>
+            <td>Animation speed for pieces appearing on squares (i.e. fully transparent to fully opaque).<br>
+                Note that if <span>sparePieces</span> is set, these are not the type of animations that occur; the relevant setting is <span>moveSpeed</span>.</span>.</td>
+        </tr>
+        <tr>
+            <td>
+                <span>moveSpeed</span>
+            </td>
+            <td>
+                <span>Number</span> or <span>'slow'</span> or <span>'fast'</span>
+            </td>
+            <td>
+                200
+            </td>
+            <td>Animation speed for pieces moving across or onto the board.</td>
+        </tr>
+        <tr>
+            <td>
+                <span>snapbackSpeed</span>
+            </td>
+            <td>
+                <span>Number</span> or <span>'slow'</span> or <span>'fast'</span>
+            </td>
+            <td>
+                50
+            </td>
+            <td>Animation speed for when pieces dragged off the board snap back to their original square.<br>
+                This only has an effect if <span>dropOffBoard</span> is set to <span>'snapback'</span>.</td>
+        </tr>
+        <tr>
+            <td>
+                <span>snapSpeed</span>
+            </td>
+            <td>
+                <span>Number</span> or <span>'slow'</span> or <span>'fast'</span>
+            </td>
+            <td>
+                25
+            </td>
+            <td>Animation speed for when pieces snap to the middle of a square upon being dropped.</td>
+        </tr>
+        <tr>
+            <td>
+                <span>trashSpeed</span>
+            </td>
+            <td>
+                <span>Number</span> or <span>'slow'</span> or <span>'fast'</span>
+            </td>
+            <td>
+                100
+            </td>
+            <td>
+                Animation speed for when pieces are removed.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>
+                    showErrors
+                </span>
+            </td>
+            <td>
+                <span>false</span> or <span>'console'</span> or <span>'alert'</span>
+            </td>
+            <td>
+                <span>false</span>
+            </td>
+            <td>
+                Errors are ignored if <span>false</span>. If <span>'console'</span>, errors go to <span>console.log</span>. If <span>'alert'</span>, errors go to window.alert().
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>
+                    showErrors
+                </span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>N/A</td>
+            <td>If <span>showErrors</span> is a function, it receives the arguments:
+                <ol>
+                    <li>error code</li>
+                    <li>error string</li>
+                    <li>anything relevant (optional)</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onChange</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                N/A
+            </td>
+            <td>
+                Fires when the board position changes. Arguments are old position and new position.<br>
+                WARNING: Calling <span>clear</span>, <span>move</span>, <span>position</span>, or <span>start</span> methods in your onChange function may trigger an endless loop or a stack overflow.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onDragStart</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                N/A
+            </td>
+            <td>Fires when a piece is picked up. Returning <span>false</span> from this method will prevent the drag action.<br>
+            Arguments: <ol>
+                    <li>
+                        source of the piece
+                    </li>
+                    <li>
+                        piece code
+                    </li>
+                    <li>
+                        current position on the board
+                    </li>
+                    <li>
+                        current board orientation
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onDragMove</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                N/A
+            </td>
+            <td>Fires when a dragged piece changes location.<br>
+                Arguments: <ol>
+                    <li>
+                        new location of the piece
+                    </li>
+                    <li>
+                        old location of the piece
+                    </li>
+                    <li>
+                        original source of the piece
+                    </li>
+                    <li>
+                        piece code
+                    </li>
+                    <li>
+                        current board position
+                    </li>
+                    <li>
+                        current orientation
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onDrop</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                N/A
+            </td>
+            <td>Fires when a dragged piece is dropped. Returning <span>'snapback'</span> will return the piece to its source square; returning <span>'trash'</span> from this method will remove the piece.<br>
+                Arguments: <ol>
+                    <li>
+                        original location of the piece
+                    </li>
+                    <li>
+                        target location of the piece
+                    </li>
+                    <li>
+                        piece code
+                    </li>
+                    <li>
+                        new board position once the piece drops
+                    </li>
+                    <li>
+                        prior board position
+                    </li>
+                    <li>
+                        current orientation
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onMouseoutSquare</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                <span>N/A</span>
+            </td>
+            <td>Fires when a mouse leaves a square.<br>
+                Arguments: <ol>
+                    <li>
+                        square that was left
+                    </li>
+                    <li>
+                        piece on that square, or <span>false</span> if none
+                    </li>
+                    <li>
+                        Current board position
+                    </li>
+                    <li>
+                        Current orientation
+                    </li>
+                </ol>
+                NOTE: This method is not invoked during drag and drop interactions.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onMouseoverSquare</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                <span>N/A</span>
+            </td>
+            <td>Fires when a mouse enters a square.<br>
+                Arguments: <ol>
+                    <li>
+                        square that was entered
+                    </li>
+                    <li>
+                        piece on that square, or <span>false</span> if none
+                    </li>
+                    <li>
+                        Current board position
+                    </li>
+                    <li>
+                        Current orientation
+                    </li>
+                </ol>
+                NOTE: This method is not invoked during drag and drop interactions.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onMoveEnd</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                <span>N/A</span>
+            </td>
+            <td>Fires at the end of animations when the board position changes.<br>
+                Arguments: <ol>
+                    <li>
+                        old board position
+                    </li>
+                    <li>
+                        new board position
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">onRender</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                N/A
+            </td>
+            <td>
+                Takes no arguments; fires immediately after WebGL renders the board.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onSnapbackEnd</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                <span>N/A</span>
+            </td>
+            <td>Fires when the 'snapback' animation is complete after users try to drag pieces off the board.<br>
+                Arguments: <ol>
+                    <li>
+                        piece code
+                    </li>
+                    <li>
+                        square piece returned to
+                    </li>
+                    <li>
+                        current board position
+                    </li>
+                    <li>
+                        current orientation
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>onSnapEnd</span>
+            </td>
+            <td>
+                <span>function</span>
+            </td>
+            <td>
+                <span>N/A</span>
+            </td>
+            <td>Fires when the piece 'snap' animation is complete and the piece is positioned at the center of a square.<br>
+                Arguments: <ol>
+                    <li>
+                        original location of the piece
+                    </li>
+                    <li>
+                        target location of the piece
+                    </li>
+                    <li>
+                        piece code
+                    </li>
+                </ol>
+                WARNING: Some browsers will not actually render the piece in its new location until this method returns, so do not run off with the event thread at this point! Post any long synchronous routines using <span>setTimeout()</span> instead. This applies to both chessboard.js and chessboard3.js.
+            </td>
+        </tr>
+    </table>
+    <h2>Methods</h2>
+    <p>Once the widget is created, here is the stuff you can do with it.</p>
+    <table>
+        <tr>
+            <th>
+                Method
+            </th>
+            <th>
+                Args
+            </th>
+            <th>
+                Description
+            </th>
+        </tr>
+        <tr>
+            <td>
+                <span>clear(useAnimation)</span>
+            </td>
+            <td>
+                useAnimation is an optional boolean argument, defaulting to true.
+            </td>
+            <td>
+                Clears the board of all pieces.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>destroy()</span>
+            </td>
+            <td>
+                none
+            </td>
+            <td>
+                Removes the widget from the DOM.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>fen()</span>
+            </td>
+            <td>
+                none
+            </td>
+            <td>
+                Returns the current board position as a [partial] FEN string (without side-to-move, en passant square, castling permissions etc.)<br>
+                Ths is an alias of <span>position('fen').</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>flip()</span>
+            </td>
+            <td>
+                none
+            </td>
+            <td>
+                Flips the board orientation; alias of <span>orientation('flip').</span>
+            </td>
+        </tr>
+        <tr>
+            <td><span class="highlight">greySquare(square)</span></td>
+            <td>Takes one argument, <span>square</span>, e.g. <span>'e8'</span>.</td>
+            <td>
+                Highlights the square.<br>
+                This method is not supported in chessboard.js, but there is a <a href="http://chessboardjs.com/examples#5003">workaround:</a>
+                <pre class="prettyprint">var greySquare = function(square) {
+      var squareEl = $('#board .square-' + square);
+      var background = '#a9a9a9';
+      if (squareEl.hasClass('black-3c85d') === true) {
+        background = '#696969';
+      }
+      squareEl.css('background', background);
+    };</pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>move(move1, move2, move3, ... etc.)</span>
+            </td>
+            <td>
+                Arguments are a list of moves in algebraic notation (<span>'e2-e4'</span>, <span>'g8-f6'</span>, etc.
+            </td>
+            <td>
+                Executes one or more moves on the board, and returns an updated position object.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>orientation()</span>
+            </td>
+            <td>
+                none
+            </td>
+            <td>
+                Returns the current orientation of the board (i.e. 'black' or 'white').
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>orientation(side)</span>
+            </td>
+            <td>
+                Takes one <span>string</span> argument, either <span>'black'</span>, <span>'white'</span>, or <span>'flip'</span>.<br>
+            </td>
+            <td>
+                This places the camera in the default position for the specified player. If the argument is <span>'flip'</span> it flips the orientation and then moves the camera.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>position()</span>
+            </td>
+            <td>
+                Takes one optional <span>string</span> argument, <span>'fen'</span>.
+            </td>
+            <td>
+                Returns the current position object in chessboard.js format, unless the <span>'fen'</span> argument is given, in which case it returns the position as a FEN string.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>position(newPosition, useAnimation)</span>
+            </td>
+            <td>
+                <ol>
+                    <li><span>newPosition</span> is a position object, a FEN string, or <span>'start'</span> </li>
+                    <li><span>useAnimation</span> is an optional <span>boolean</span> argument that defaults to true..</li>
+                </ol>
+            </td>
+            <td>
+                Sets the current position of the board. Pass false for <span>useAnimation</span> to set the position instantly without animating to it.<br>
+            </td>
+        </tr>
+        <tr>
+            <td><span class="highlight">removeGreySquares</span></td>
+            <td>none</td>
+            <td>
+                Removes all highlights from the board that were set by calling <span>greySquare()</span>.<br>
+                This method is not supported in chessboard.js, but there is a <a href="http://chessboardjs.com/examples#5003">workaround:</a>
+                <pre class="prettyprint">var removeGreySquares = function() {
+      $('#board .square-55d63').css('background', '');
+    };</pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>resize()</span>
+            </td>
+            <td>
+                none
+            </td>
+            <td>
+                Recalculates the board size based on the parent element and resizes the board to the largest size that fits with a 4:3 aspect ratio.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>start(useAnimation)</span>
+            </td>
+            <td>
+                <span>useAnimation</span> is an optional <span>boolean</span> parameter that defaults to true.<br>
+                If <span>useAnimation</span> is false, or if tween.js has not been loaded, the board position is set instantly.<br>
+            </td>
+            <td>
+                This is an alias of <span>position('start', useAnimation)</span>.
+            </td>
+        </tr>
+    </table>
+    <h2>Errors</h2>
+    <p>There is an error system; you can control how the errors are presented with the <span>showErrors</span> config option.</p>
+    <table>
+        <tr>
+            <th>
+                ID
+            </th>
+            <th>
+                Message
+            </th>
+            <th>
+                Description
+            </th>
+        </tr>
+        <tr>
+            <td>1001</td>
+            <td>
+                The first argument to the constructor cannot be an empty string.
+            </td>
+            <td>
+                The first argument should be a DOM element or its ID.
+            </td>
+        </tr>
+        <tr>
+            <td>1002</td>
+            <td>
+                Element with given ID passed to the constructor is not in the DOM.
+            </td>
+            <td>
+                The first argument should be a DOM ID, not a selector (e.g. "#myBoard").
+            </td>
+        </tr>
+        <tr>
+            <td>1003</td>
+            <td>
+                The first argument to the constructor must be an ID or a single DOM node.
+            </td>
+            <td>
+                See description for error 1001.
+            </td>
+        </tr>
+        <tr>
+            <td>1004</td>
+            <td>
+                JSON does not exist; please include a JSON polyfill.
+            </td>
+            <td>
+                I'm not sure that any browser supporting WebGL doesn't have JSON support, but it checks anyway.
+            </td>
+        </tr>
+        <tr>
+            <td>2354</td>
+            <td>
+                config.showNotation is true and helvetiker_regular.typeface.js has not been loaded.
+            </td>
+            <td>
+                This is not a fatal error; it omits the notation labels.
+            </td>
+        </tr>
+        <tr>
+            <td>3701</td>
+            <td>
+                Square has a pice found in mesh array but not in current position.
+            </td>
+            <td>
+                Internal error that you should not see.
+            </td>
+        </tr>
+        <tr>
+            <td>3702</td>
+            <td>
+                Square has a piece found in current position but not in mesh array.
+            </td>
+            <td>
+                Internal error that you should not see.
+            </td>
+        </tr>
+        <tr>
+            <td>2826</td>
+            <td>
+                Invalid move passed to the move method.
+            </td>
+            <td>
+                Moves should be in algebraic format, e.g. "e2-e4".
+            </td>
+        </tr>
+        <tr>
+            <td>5482</td>
+            <td>
+                Invalid move passed to the orientation method.
+            </td>
+            <td>
+                The argument needs to be 'white', 'black', or 'flip'.
+            </td>
+        </tr>
+        <tr>
+            <td>6482</td>
+            <td>
+                Invalid value passed to the position method.
+            </td>
+            <td>
+                Position must be either 'start', a valid FEN string, or a valid position object.
+            </td>
+        </tr>
+        <tr>
+            <td>7263</td>
+            <td>
+                Invalid value found in config.position.
+            </td>
+            <td>
+                Position must be 'start', a valid FEN string, or a valid position object.
+            </td>
+        </tr>
+    </table>
+</article>
+<footer id="footer">
+    <p>Copyright 2015 Jason Tiscione; chessboard3.js is released under the MIT license. The repository for this project is on <a href="https://github.com/tiscione/chessboard.js">GitHub.</a></p>
+    <p>Please send questions, comments, criticisms to <i>&#116;&#105;&#115;&#099;&#105;&#111;&#110;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;.</i></p>
+</footer>
+</body>
+</html>
