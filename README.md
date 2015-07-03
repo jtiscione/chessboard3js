@@ -1,6 +1,6 @@
 #chessboard3.js - A 3D JavaScript Chess Board#
 
-**chessboard3.js** is a standalone JavaScript chess board based on WebGL that mirrors the API of the widely used __[chessboard.js](www.chessboardjs.com)__ 2D board library by [Scott Oakman](https://github.com/oakmac/chessboardjs). It is designed to be a drop-in replacement for chessboard.js and should run with any existing client code that currently uses chessboard.js to display a 2D board.
+**chessboard3.js** is a standalone JavaScript chess board based on WebGL that mirrors the API of the widely used __[chessboard.js](www.chessboardjs.com)__ 2D board library by [Chris Oakman](https://github.com/oakmac/chessboardjs). It is designed to be a drop-in replacement for chessboard.js and should run with any existing client code that currently uses chessboard.js to display a 2D board.
 
 Like its 2D analogue, chessboard3.js is a "dumb board" with no AI or move validation. The flexible API that has made chessboard.js useful in a variety of applications is fully available, and if necessary chessboard.js can be used as a fallback for hessboard3.js in case WebGL is not available.
 
@@ -13,7 +13,7 @@ Since it uses WebGL and [three.js](www.threejs.org) to render the board (as oppo
 - Integrate chessboard3.js and [chess.js](https://github.com/jhlywa/chess.js) with a PGN database of famous games.
 - Have users play against a chess engine using chessboard3.js as the UI.
 
-You can do the same things you can with Scott Oakman's chessboard.js (given the caveats that come with using WebGL).
+You can do the same things you can with Chris Oakman's chessboard.js (given the caveats that come with using WebGL).
 
 ##Extra equipment you may need##
 
