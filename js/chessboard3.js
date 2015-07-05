@@ -680,6 +680,9 @@
                 mesh = new THREE.Mesh(geometry, material);
                 mesh.position.x = coords.x;
                 mesh.position.z = coords.z;
+                if (color === 'w') {
+                    mesh.rotation.y = Math.PI;
+                }
                 mesh.castShadow = true;
                 return mesh;
             }
@@ -1808,6 +1811,7 @@
                     url = pieceSet.replace("{piece}", name);
                 }
                 var loader = new THREE.JSONLoader();
+                window.localStorage.removeItem(url);
                 var json = window.localStorage.getItem(url);
                 if (json) {
                     var loadedGeometry = JSON.parse(json);
