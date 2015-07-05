@@ -1811,7 +1811,6 @@
                     url = pieceSet.replace("{piece}", name);
                 }
                 var loader = new THREE.JSONLoader();
-                window.localStorage.removeItem(url);
                 var json = window.localStorage.getItem(url);
                 if (json) {
                     var loadedGeometry = JSON.parse(json);
