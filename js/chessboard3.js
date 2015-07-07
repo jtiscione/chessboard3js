@@ -319,8 +319,8 @@
                 RENDER_FLAG = true,
                 CURRENT_ORIENTATION = 'white',
                 CURRENT_POSITION = {},
-                SQUARE_MESHES = {},
-                PIECE_MESHES = {},
+                SQUARE_MESH_IDS = {},
+                PIECE_MESH_IDS = {},
                 DRAG_INFO = null,
                 SOURCE_SQUARE_HIGHLIGHT_MESH = null,
                 DESTINATION_SQUARE_HIGHLIGHT_MESH = null,
@@ -595,7 +595,7 @@
 
 
                 if ('ontouchstart' in document.documentElement) {
-                    RENDERER.domElement.addEventListener(('touchstart', mouseDown, true));
+                    RENDERER.domElement.addEventListener('touchstart', mouseDown, true);
                     RENDERER.domElement.addEventListener('touchmove', mouseMove, true);
                     RENDERER.domElement.addEventListener('touchend', mouseUp, true);
                 }
@@ -713,7 +713,7 @@
                         squareGeometry.computeFaceNormals();
                         squareGeometry.computeTangents();
                         squareMesh.receiveShadow = true;
-                        SQUARE_MESHES[square] = squareMesh;
+                        SQUARE_MESH_IDS[square] = squareMesh.id;
                         squareMesh.tag = square;
                         SCENE.add(squareMesh);
                     }
@@ -800,33 +800,40 @@
             //                              ANIMATIONS                              //
             // ---------------------------------------------------------------------//
 
-            // Verify that CURRENT_POSITION and PIECE_MESHES are in sync
+            // Verify that CURRENT_POSITION and PIECE_MESH_IDS are in sync
             function checkBoard() {
-                for (var sq in PIECE_MESHES) {
-                    if (!PIECE_MESHES.hasOwnProperty(sq) || validSpareSquare(sq)) {
+                for (var sq in PIECE_MESH_IDS) {
+                    if (!PIECE_MESH_IDS.hasOwnProperty(sq) || validSpareSquare(sq)) {
                         continue;
                     }
                     if (CURRENT_POSITION.hasOwnProperty(sq) === false) {
-                        error(3701, "Square "+sq+" in PIECE_MESHES but not in CURRENT_POSITION");
+                        error(3701, "Square "+sq+" in PIECE_MESH_IDS but not in CURRENT_POSITION");
+                    } else {
+                        if (!SCENE.getObjectById(PIECE_MESH_IDS[sq])) {
+                            error(3702, "Mesh not present on square "+sq+", adding a replacement.");
+                            var mesh = buildPieceMesh(sq, CURRENT_POSITION[sq]);
+                            SCENE.add(mesh);
+                            PIECE_MESH_IDS[sq] = mesh.id;
+                        }
                     }
                 }
                 for (sq in CURRENT_POSITION) {
                     if (!CURRENT_POSITION.hasOwnProperty(sq)) {
                         continue;
                     }
-                    if (PIECE_MESHES.hasOwnProperty(sq) === false) {
-                        error(3702, "Square "+sq+" in CURRENT_POSITION but not in PIECE_MESHES");
+                    if (PIECE_MESH_IDS.hasOwnProperty(sq) === false) {
+                        error(3703, "Square "+sq+" in CURRENT_POSITION but not in PIECE_MESH_IDS");
                     }
                 }
             }
 
             function animateSquareToSquare(src, dest, completeFn) {
                 var destSquareMesh, pieceMesh;
-                if (PIECE_MESHES.hasOwnProperty(src)) {
-                    pieceMesh = PIECE_MESHES[src];
+                if (PIECE_MESH_IDS.hasOwnProperty(src)) {
+                    pieceMesh = SCENE.getObjectById(PIECE_MESH_IDS[src]);
                 }
-                if (SQUARE_MESHES.hasOwnProperty(dest)) {
-                    destSquareMesh = SQUARE_MESHES[dest];
+                if (SQUARE_MESH_IDS.hasOwnProperty(dest)) {
+                    destSquareMesh = SCENE.getObjectById(SQUARE_MESH_IDS[dest]);
                 }
                 if (validSpareSquare(src)) {
                     // this is an animation from a spare square to an ordinary square.
@@ -845,10 +852,10 @@
                             pieceMesh.position.z = tz_src + t * (tz_dest - tz_src);
                         })
                         .onComplete(function() {
-                            PIECE_MESHES[dest] = pieceMesh;
+                            PIECE_MESH_IDS[dest] = pieceMesh.id;
                             if (validOrdinarySquare(src)) {
-                                if (pieceMesh === PIECE_MESHES[src]) {
-                                    delete PIECE_MESHES[src];
+                                if (pieceMesh.id === PIECE_MESH_IDS[src]) {
+                                    delete PIECE_MESH_IDS[src];
                                 }
                             }
                             completeFn();
@@ -858,16 +865,16 @@
             }
 
             function animatePieceFadeOut(square, completeFn) {
-                if (PIECE_MESHES.hasOwnProperty(square)) {
-                    if (validOrdinarySquare(square) && PIECE_MESHES.hasOwnProperty(square)) {
-                        var mesh = PIECE_MESHES[square];
+                if (PIECE_MESH_IDS.hasOwnProperty(square)) {
+                    if (validOrdinarySquare(square) && PIECE_MESH_IDS.hasOwnProperty(square)) {
+                        var mesh = SCENE.getObjectById(PIECE_MESH_IDS[square]);
                         var tween = new TWEEN.Tween({t: 1})
                             .to({t: 0}, cfg.trashSpeed)
                             .onUpdate(function() {
                                 mesh.opacity = this.t;
                             }).onComplete(function(){
-                                SCENE.remove(PIECE_MESHES[square]);
-                                delete PIECE_MESHES[square];
+                                SCENE.remove(mesh);
+                                delete PIECE_MESH_IDS[square];
                                 completeFn();
                             });
                         tween.start();
@@ -883,7 +890,7 @@
                     .onUpdate(function() {
                         mesh.opacity = this.t;
                     }).onComplete(function() {
-                        PIECE_MESHES[square] = mesh;
+                        PIECE_MESH_IDS[square] = mesh.id;
                         completeFn();
                     });
                 tween.start();
@@ -913,7 +920,7 @@
                 var j;
                 for (j = 0; j < a.length; j++) {
                     if (a[j].type === 'clear') {
-                        if (validOrdinarySquare(a[j].square) && PIECE_MESHES.hasOwnProperty(a[j].square)) {
+                        if (validOrdinarySquare(a[j].square) && PIECE_MESH_IDS.hasOwnProperty(a[j].square)) {
                             animatePieceFadeOut(a[j].square, onFinish);
                         }
                     }
@@ -1119,9 +1126,9 @@
             }
 
             function isXZOnSquare(x_coord, z_coord) {
-                for (var sq in SQUARE_MESHES) {
-                    if (SQUARE_MESHES.hasOwnProperty(sq)) {
-                        var squareMesh = SQUARE_MESHES[sq];
+                for (var sq in SQUARE_MESH_IDS) {
+                    if (SQUARE_MESH_IDS.hasOwnProperty(sq)) {
+                        var squareMesh = SCENE.getObjectById(SQUARE_MESH_IDS[sq]);
                         if (x_coord >= squareMesh.position.x - SQUARE_SIZE / 2
                             && x_coord < squareMesh.position.x + SQUARE_SIZE / 2
                             && z_coord >= squareMesh.position.z - SQUARE_SIZE / 2
@@ -1153,19 +1160,18 @@
             // Checks ray collisions with board or pieces
             function raycast(mouseX, mouseY) {
 
-                //var allSquares = Object.keys(PIECE_MESHES);
                 var raycaster = pickingRayCaster(mouseX, mouseY);
 
                 var possibleHits = {};
                 var meshes = [];
                 var count = 0;
                 var intersection;
-                var sq, piece;
-                for (sq in PIECE_MESHES) {
-                    if (!PIECE_MESHES.hasOwnProperty(sq)) {
+                var sq, piece, mesh;
+                for (sq in PIECE_MESH_IDS) {
+                    if (!PIECE_MESH_IDS.hasOwnProperty(sq)) {
                         continue;
                     }
-                    var pieceMesh = PIECE_MESHES[sq];
+                    var pieceMesh = SCENE.getObjectById(PIECE_MESH_IDS[sq]);
                     piece = pieceOnSquare(sq);
                     var pieceBoundingBox = GEOMETRIES[piece.charAt(1)].boundingBox.clone();
                     pieceBoundingBox.min.x += pieceMesh.position.x;
@@ -1186,14 +1192,15 @@
                         // we hit one piece's bounding box; just take a shortcut and assume an exact hit:
                         sq = Object.keys(possibleHits)[0];
                         intersection = possibleHits[sq];
+                        mesh = meshes[0];
                         return {
                             source : sq,
                             location : sq,
                             piece : pieceOnSquare(sq),
-                            mesh : PIECE_MESHES[sq],
+                            mesh : mesh,
                             intersection_point : intersection,
-                            off_center_x : intersection.x - PIECE_MESHES[sq].position.x,
-                            off_center_z : intersection.z - PIECE_MESHES[sq].position.z
+                            off_center_x : intersection.x - mesh.position.x,
+                            off_center_z : intersection.z - mesh.position.z
                         };
                     }
                     // Check piece meshes to see which mesh is closest to camera
@@ -1201,17 +1208,20 @@
                     var intersects = raycaster.intersectObjects(meshes);
                     if (intersects.length > 0) {
                         for (sq in possibleHits) {
-                            if (possibleHits.hasOwnProperty(sq) && PIECE_MESHES[sq] === intersects[0].object) {
-                                intersection = intersects[0].point;
-                                return {
-                                    source : sq,
-                                    location : sq,
-                                    piece : pieceOnSquare(sq),
-                                    mesh : PIECE_MESHES[sq],
-                                    intersection_point : intersection,
-                                    off_center_x : intersection.x - PIECE_MESHES[sq].position.x,
-                                    off_center_z : intersection.z - PIECE_MESHES[sq].position.z
-                                };
+                            if (possibleHits.hasOwnProperty(sq)) {
+                                mesh = SCENE.getObjectById(PIECE_MESH_IDS[sq]);
+                                if (mesh === intersects[0].object) {
+                                    intersection = intersects[0].point;
+                                    return {
+                                        source : sq,
+                                        location : sq,
+                                        piece : pieceOnSquare(sq),
+                                        mesh : mesh,
+                                        intersection_point : intersection,
+                                        off_center_x : intersection.x - mesh.position.x,
+                                        off_center_z : intersection.z - mesh.position.z
+                                    };
+                                }
                             }
                         }
                     }
@@ -1227,7 +1237,7 @@
                 }
                 sq = isXZOnSquare(pos.x, pos.z);
                 piece = pieceOnSquare(sq);
-                var mesh = PIECE_MESHES[sq];
+                mesh = SCENE.getObjectById(PIECE_MESH_IDS[sq]);
                 return {
                     source : sq,
                     location : sq,
@@ -1261,7 +1271,7 @@
                     var piece = SPARE_POSITION[sq];
                     var mesh = buildPieceMesh(sq, piece);
                     mesh.position.y = -0.5; // board thickness
-                    PIECE_MESHES[sq] = mesh;
+                    PIECE_MESH_IDS[sq] = mesh.id;
                     SCENE.add(mesh);
                 }
             }
@@ -1274,8 +1284,9 @@
                 } else {
                     var tx_start = DRAG_INFO.mesh.position.x;
                     var tz_start = DRAG_INFO.mesh.position.z;
-                    var tx_target = SQUARE_MESHES[DRAG_INFO.source].position.x;
-                    var tz_target = SQUARE_MESHES[DRAG_INFO.source].position.z;
+                    var squareMesh = SCENE.getObjectById(SQUARE_MESH_IDS[DRAG_INFO.source]);
+                    var tx_target = squareMesh.position.x;
+                    var tz_target = squareMesh.position.z;
                     var end = function() {
                         DRAG_INFO.mesh.position.x = tx_target;
                         DRAG_INFO.mesh.position.z = tz_target;
@@ -1311,7 +1322,7 @@
                     var position = deepCopy(CURRENT_POSITION);
                     delete position[DRAG_INFO.source];
                     setCurrentPosition(position);
-                    delete PIECE_MESHES[DRAG_INFO.source];
+                    delete PIECE_MESH_IDS[DRAG_INFO.source];
                 }
                 DRAG_INFO = null;
             }
@@ -1319,17 +1330,18 @@
             function dropDraggedPieceOnSquare() {
                 removeSquareHighlights();
                 var newPosition = deepCopy(CURRENT_POSITION);
-                DRAG_INFO.mesh.position.x = SQUARE_MESHES[DRAG_INFO.location].position.x;
-                DRAG_INFO.mesh.position.z = SQUARE_MESHES[DRAG_INFO.location].position.z;
+                var squareMesh = SCENE.getObjectById(SQUARE_MESH_IDS[DRAG_INFO.location]);
+                DRAG_INFO.mesh.position.x = squareMesh.position.x;
+                DRAG_INFO.mesh.position.z = squareMesh.position.z;
                 if (validOrdinarySquare(DRAG_INFO.source)) {
                     delete newPosition[DRAG_INFO.source];
-                    delete PIECE_MESHES[DRAG_INFO.source];
+                    delete PIECE_MESH_IDS[DRAG_INFO.source];
                 }
                 if (newPosition[DRAG_INFO.location]) {
-                    SCENE.remove(PIECE_MESHES[DRAG_INFO.location]);
+                    SCENE.remove(SCENE.getObjectById(PIECE_MESH_IDS[DRAG_INFO.location]));
                 }
                 newPosition[DRAG_INFO.location] = DRAG_INFO.piece;
-                PIECE_MESHES[DRAG_INFO.location] = DRAG_INFO.mesh;
+                PIECE_MESH_IDS[DRAG_INFO.location] = DRAG_INFO.mesh.id;
                 var src = DRAG_INFO.source, tgt = DRAG_INFO.location, piece = DRAG_INFO.piece;
                 DRAG_INFO = null;
                 setCurrentPosition(newPosition);
@@ -1343,15 +1355,15 @@
             // ---------------------------------------------------------------------//
 
             function drawPositionInstant() {
-                for (var sq in PIECE_MESHES) {
-                    if (PIECE_MESHES.hasOwnProperty(sq) !== true) {
+                for (var sq in PIECE_MESH_IDS) {
+                    if (PIECE_MESH_IDS.hasOwnProperty(sq) !== true) {
                         continue;
                     }
                     if (validSpareSquare(sq)) {
                         continue; // leave spare pieces
                     }
-                    SCENE.remove(PIECE_MESHES[sq]);
-                    delete PIECE_MESHES[sq];
+                    SCENE.remove(SCENE.getObjectById(PIECE_MESH_IDS[sq]));
+                    delete PIECE_MESH_IDS[sq];
                 }
                 // add new meshes
                 for (var square in CURRENT_POSITION) {
@@ -1359,7 +1371,7 @@
                         continue;
                     }
                     var mesh = buildPieceMesh(square, CURRENT_POSITION[square]);
-                    PIECE_MESHES[square] = mesh;
+                    PIECE_MESH_IDS[square] = mesh.id;
                     SCENE.add(mesh);
                 }
             }
@@ -1405,7 +1417,7 @@
                 if (!color) {
                     color = 0xFFFF00;
                 }
-                var squareMesh = SQUARE_MESHES[sq];
+                var squareMesh = SCENE.getObjectById(SQUARE_MESH_IDS[sq]);
                 var highlightMesh = null;
                 if (squareMesh) {
                     var highlight_geometry = new THREE.TorusGeometry(1.2 * SQUARE_SIZE / 2, 0.1, 4, 4);
@@ -1723,6 +1735,10 @@
                 RENDER_FLAG = true;
             };
 
+            widget.rerender = function() {
+                RENDER_FLAG = true;
+            };
+
             widget.start = function(useAnimation) {
                 widget.position('start', useAnimation);
             };
@@ -1917,11 +1933,18 @@
                         }
                     }
                     if (RENDER_FLAG || DRAG_INFO !== null || ANIMATION_HAPPENING || cameraMoved) {
-                        RENDERER.render(SCENE, CAMERA);
+                        var goahead = true;
                         if (cfg.hasOwnProperty('onRender') && typeof cfg.onReady === 'function') {
-                            cfg.onRender();
+                            if (cfg.onRender(SCENE, deepCopy(SQUARE_MESH_IDS), deepCopy(PIECE_MESH_IDS), deepCopy(CURRENT_POSITION)) === false) {
+                                goahead = false;
+                            }
                         }
-                        RENDER_FLAG = false;
+                        if (goahead) {
+                            RENDERER.render(SCENE, CAMERA);
+                            RENDER_FLAG = false;
+                        } else {
+                            RENDER_FLAG = true;
+                        }
                     }
                 }
             }

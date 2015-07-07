@@ -589,7 +589,22 @@
                 N/A
             </td>
             <td>
-                Takes no arguments; fires immediately after WebGL renders the board.
+                Fires immediately before WebGL renders the board.<br>
+                Arguments; <ol>
+                    <li>
+                        The THREE.Scene object.
+                    </li>
+                    <li>
+                        An object with squares as keys, and square mesh ids within the THREE.Scene as values
+                    </li>
+                    <li>
+                        An object with squares as keys, and piece mesh ids within the THREE.Scene as values.
+                    </li>
+                    <li>
+                        Current board position.
+                    </li>
+                </ol>
+                Returning false from this function will prevent the rendering from taking place, but it will be called again.
             </td>
         </tr>
         <tr>
@@ -802,6 +817,17 @@
         </tr>
         <tr>
             <td>
+                <span>rerender()</span>
+            </td>
+            <td>
+                none
+            </td>
+            <td>
+                Rerenders the three.js scene (asynchronously).
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <span>start(useAnimation)</span>
             </td>
             <td>
@@ -875,14 +901,23 @@
         <tr>
             <td>3701</td>
             <td>
-                Square has a pice found in mesh array but not in current position.
+                Square has a piece in mesh array but not in current position.
             </td>
             <td>
                 Internal error that you should not see.
             </td>
         </tr>
         <tr>
-            <td>3702</td>
+            <td>3701</td>
+            <td>
+                Square has a piece found in mesh array that does not exist in the three.js scene.
+            </td>
+            <td>
+                Internal error that you should not see.
+            </td>
+        </tr>
+        <tr>
+            <td>3703</td>
             <td>
                 Square has a piece found in current position but not in mesh array.
             </td>
