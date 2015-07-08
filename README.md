@@ -59,4 +59,4 @@ Since chessboard3.js exposes a slight superset of the chessboard.js API, another
 #License#
 --------------------------------------
 
-chessboard3.js is released under the [MIT License](https://github.com/tiscione/chessboard3js/blob/master/LICENSE).
+chessboard3.js is released under the [MIT License](https://github.com/jtiscione/chessboard3js/blob/master/LICENSE).
