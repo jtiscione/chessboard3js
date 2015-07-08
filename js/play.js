@@ -516,6 +516,13 @@ $(function() {
             engine.postMessage('uci');
             engine.postMessage('ucinewgame');
             updateScoreGauge(0); // they each act a little differently
+            if (jsURL.match(/p4wn/)) {
+                swal('Using the tiny p4wn engine, which plays at an amateur level.');
+            } else if (jsURL.match(/lozza/)) {
+                swal('Using Lozza engine by Colin Jerkins, estimated rating 2340.')
+            } else if (jsURL.match(/stockfish/)) {
+                swal("Using stockfish engine, estimated rating > 3000.");
+            }
         }
     });
 

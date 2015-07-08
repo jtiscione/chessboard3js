@@ -17,7 +17,7 @@
         <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
         <script type="text/javascript" src="js/json3.min.js"></script>
 
-        <script type="text/javascript" src="js/three.js"></script>
+        <script type="text/javascript" src="js/three.min.js"></script>
         <script type="text/javascript" src="js/tween.min.js"></script>
         <script type="text/javascript" src="js/helvetiker_regular.typeface.js"></script>
         <script type="text/javascript" src="js/OrbitControls.js"></script>
@@ -47,7 +47,7 @@
             </nav>
         </header>
         <div class="banner" id="banner">
-            <p>Demo - play using chessboard3.js against the <a href="https://github.com/exoticorn/stockfish-js">stockfish.js</a> engine! This example uses <a href="https://github.com/jhlywa/chess.js/">chess.js</a> for move validation.</p>
+            <p>Demo - Play using chessboard3.js against several [JavaScript] chess engines (stockfish, lozza, and p4wn). This example uses <a href="https://github.com/jhlywa/chess.js/">chess.js</a> for move validation.</p>
         </div>
         <article id="container">
             <div id="board"></div>
@@ -67,7 +67,7 @@
                 <div id="status"></div>
                 <div id="gaugebox">
                     <div id="optionsBox">
-                        <label for="piecesMenu">CHESS PIECES:</label>
+                        <label for="piecesMenu">CHESS SET:</label>
                         <select id="piecesMenu">
                             <option value="iconic" selected>Iconic</option>
                             <option value="bauhaus">Bauhaus</option>
@@ -78,9 +78,9 @@
                         <br>
                         <label for="engineMenu">CHESS ENGINE:</label>
                         <select id="engineMenu">
+                            <option value="js/p4wn.js">p4wn</option>
                             <option value="js/lozza.js" selected>Lozza</option>
                             <option value="js/stockfish.js">stockfish</option>
-                            <option value="js/p4wn.js">p4wn</option>
                         </select>
                         <br>
                         <label for="moveTime">MOVE TIME (seconds):</label>
