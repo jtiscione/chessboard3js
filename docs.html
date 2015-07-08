@@ -83,6 +83,21 @@
         </tr>
         <tr>
             <td>
+                <span class="highlight">localStorage</span>
+            </td>
+            <td>
+                <span>String</span>
+            </td>
+            <td>
+                <span>true</span> (i.e., empty board)
+            </td>
+            <td>
+                Determines whether piece meshes should be cached using the localStorage API.<br>
+                This needs to be set to false to see any results if piece mesh files are being edited.
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <span>orientation</span>
             </td>
             <td>
@@ -104,7 +119,7 @@
                 <span>string</span> or <span>function</span>
             </td>
             <td>
-                <span>'assets/chesspieces/wikipedia/{piece}.json'</span>
+                <span>'assets/chesspieces/iconic/{piece}.json'</span>
             </td>
             <td>
                 A template string for the URL of the piece mesh files, where <span>'{piece}'</span> gets replaced by <span>'K'</span>, <span>'Q'</span>, <span>'R'</span>, <span>'B'</span>, or <span>'P'</span>.<br/>
@@ -113,10 +128,9 @@
                     A configuration object can have both of these set; chessboard.js will ignore one and chessboard3.js will ignore the other.</p>
                 <p>If <span>pieceSet</span> is a function, the only argument is a one character piece code. The function should return a URL
                     to the JSON file.</p>
-                <p>The only piece set available right now is "wikipedia", which is a spoof of the piece images on Wikipedia. (This is a result of my initial attempts at Blender.)</p>
                 <p>NOTE: At present chessboard3.js only loads mesh geometries from the JSON files, without any added textures. It then slaps white and black PhongMaterials on
                 the geometries to create the meshes.</p>
-                <p>The bounding box for a piece mesh should be restricted to [-0.5, 0.5] for x and y; the board itself lies on the z=0 plane.</p>
+                <p>Squares are 2x2, so the bounding box for a piece mesh should be restricted to [-0.5, 0.5] for x and y; the board itself lies on the z=0 plane.</p>
             </td>
         </tr>
         <tr>

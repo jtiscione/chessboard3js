@@ -102,6 +102,9 @@
     position: relative;
     float: left;
 }
+#optionsBox {
+    text-align: left;
+}
 
 .yellowButton {
     -moz-box-shadow: 0px 1px 0px 0px #fff6af;

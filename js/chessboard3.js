@@ -457,7 +457,7 @@
                 if (cfg.hasOwnProperty('pieceSet') !== true ||
                     (typeof cfg.pieceSet !== 'string' &&
                     typeof cfg.pieceSet !== 'function')) {
-                    cfg.pieceSet = 'assets/chesspieces/wikipedia/{piece}.json';
+                    cfg.pieceSet = 'assets/chesspieces/iconic/{piece}.json';
                 }
 
                 // rotate and zoom controls
@@ -1838,6 +1838,9 @@
                     url = pieceSet.replace("{piece}", name);
                 }
                 var loader = new THREE.JSONLoader();
+                if (cfg.hasOwnProperty('localStorage') && cfg.localStorage === false) {
+                    window.localStorage.removeItem(url);
+                }
                 var json = window.localStorage.getItem(url);
                 if (json) {
                     var loadedGeometry = JSON.parse(json);
@@ -1848,7 +1851,9 @@
                     loader.load(url, function (geometry) {
                         GEOMETRIES[name] = geometry;
                         geometry.computeBoundingBox();
-                        window.localStorage.setItem(url, JSON.stringify(geometry.toJSON()));
+                        if (cfg.hasOwnProperty('localStorage') === false || cfg.localStorage !== false) {
+                            window.localStorage.setItem(url, JSON.stringify(geometry.toJSON()));
+                        }
                     });
                 }
             }

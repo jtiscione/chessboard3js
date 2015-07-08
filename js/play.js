@@ -1,8 +1,8 @@
 $(function() {
-    var engine = new Worker("js/stockfish.js");
-    console.log("GUI: ucinewgame");
+    var engine = new Worker("js/lozza.js");
+    engine.postMessage("uci");
     engine.postMessage("ucinewgame");
-
+window.localStorage.clear();
     var moveList = [], scoreList =[];
 
     var cursor = 0;
@@ -39,14 +39,8 @@ $(function() {
                 line: {"width" : 12, "stroke" : "none", "fill" : "#cccccc"},
                 text: {"space": -22, "text-anchor" : "middle", "fill" : "#cccccc", "font-size" : 10}
             },
-            {
-                gap: 100,
-                line: {"width" : 10, "stroke" : "none", "fill" : "#999999"}
-            },
-            {
-                gap: 50,
-                line: {"width" : 8, "stroke" : "none", "fill" : "#888888"}
-            }
+            {gap: 100, line: {"width" : 10, "stroke" : "none", "fill" : "#999999"}},
+            {gap: 50, line: {"width" : 8, "stroke" : "none", "fill" : "#888888"}}
         ],
         animation_speed : 200,
         diameter : 330,
@@ -67,13 +61,7 @@ $(function() {
     });
 
     function updateScoreGauge(score) {
-        var scoreVal;
-        if (player === 'w') {
-            scoreVal = -parseInt(score, 10);
-        } else {
-            scoreVal = parseInt(score, 10);
-        }
-        scoreGauge.SonicGauge('val', scoreVal);
+        scoreGauge.SonicGauge('val', parseInt(score, 10));
     }
 
     function adjustBoardWidth() {
@@ -139,6 +127,9 @@ $(function() {
                 // Before the move gets here, the engine emits info responses with scores
                 var score = parseScore(line);
                 if (score !== undefined) {
+                    if (player === 'w') {
+                        score = -score; // convert from engine's score to white's score
+                    }
                     updateScoreGauge(score);
                     currentScore = score;
                 }
@@ -179,39 +170,29 @@ $(function() {
             moveColor = 'Black';
         }
 
-        var typea="success",
-            check="";
-        if(moveColor=="White")
-            typea="warning";
+        if (game.game_over()) {
 
-        // checkmate?
-        if (game.in_checkmate() === true) {
-            status = moveColor + ' is in checkmate.';
+            if (game.in_checkmate()) {
+                status = moveColor + ' checkmated.';
+            } else if (game.in_stalemate()) {
+                status = moveColor + " stalemated";
+            } else if (game.insufficient_material()) {
+                status = "Draw (insufficient material)."
+            } else if (game.in_threefold_repetition()) {
+                status = "Draw (threefold repetition)."
+            } else if (game.in_draw()) {
+                status = "Game over (fifty move rule)."
+            }
             swal({
                 title : "Game Over",
-                text : moveColor+" is in checkmate.",
-                type : typea,
-                showCancelButton : false,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "OK",
+                text : status,
+                type: 'info',
+                showCancelButton: false,
+                confirmButtonColor: "#DD6655",
+                onConfirmButtonText: 'OK',
                 closeOnConfirm: true
             });
-            //game.game_over();
-        }
-
-        // draw?
-        else if (game.in_draw() === true) {
-            status = 'Drawn position';
-            swal({
-                title : "Game Over",
-                text : moveColor+" is in draw position.",
-                type : typea,
-                showCancelButton : false,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "Restart Game",
-                closeOnConfirm: true
-            });
-            // commenting this out to allow rewind: game.game_over();
+            engineRunning = false;
         }
 
         // game still on
@@ -228,10 +209,6 @@ $(function() {
                 status += ' ' + moveColor + ' is in check.';
             }
         }
-        if (engineRunning) {
-            status += ' Thinking...';
-        }
-        statusEl.html(status);
 
         fenEl.html(game.fen().replace(/ /g, '&nbsp;'));
         var currentPGN = game.pgn({max_width:10,newline_char:"<br>"});
@@ -242,6 +219,10 @@ $(function() {
             entirePGN = currentPGN;
         }
         pgnEl.html(currentPGN);
+        if (engineRunning) {
+            status += ' Thinking...';
+        }
+        statusEl.html(status);
     };
 
     // Set up chessboard
@@ -276,7 +257,7 @@ $(function() {
     // update the board position after the piece snap
     // for castling, en passant, pawn promotion
     var onSnapEnd = function() {
-        if (game.turn() !== player) {
+        if (!game.game_over() && game.turn() !== player) {
             fireEngine();
         }
     };
@@ -398,6 +379,9 @@ $(function() {
         }
     });
     $('#flipBtn').on('click', function() {
+        if (game.game_over()) {
+            return;
+        }
         board.flip(); //wheeee!
         if (player === 'w') {
             player = 'b';
@@ -514,6 +498,19 @@ $(function() {
         board.start();
         board.orientation('white');
         engine.postMessage('ucinewgame');
+        updateScoreGauge(0);
+    });
+
+    $("#engineMenu").change(function() {
+       console.log($("#engineMenu").val());
+        if (engine) {
+            var jsURL = $("#engineMenu").val();
+            engine.terminate();
+            engine = new Worker(jsURL);
+            engine.postMessage('uci');
+            engine.postMessage('ucinewgame');
+            updateScoreGauge(0); // they each act a little differently
+        }
     });
 
     updateStatus();
