@@ -2,7 +2,7 @@ $(function() {
     var engine = new Worker("js/lozza.js");
     engine.postMessage("uci");
     engine.postMessage("ucinewgame");
-window.localStorage.clear();
+
     var moveList = [], scoreList =[];
 
     var cursor = 0;
@@ -43,7 +43,7 @@ window.localStorage.clear();
             {gap: 50, line: {"width" : 8, "stroke" : "none", "fill" : "#888888"}}
         ],
         animation_speed : 200,
-        diameter : 330,
+        diameter : 300,
         style: {
             label: {
                 "font-size": 12,
@@ -161,7 +161,7 @@ window.localStorage.clear();
         }
     }
 
-    var updateStatus = function() {
+    function updateStatus() {
 
         var status = '';
 
@@ -289,23 +289,34 @@ window.localStorage.clear();
         }
     };
 
-    var cfg = {
-        cameraControls: true,
-        draggable: true,
-        position: 'start',
-        onDrop: onDrop,
-        onMouseoutSquare: onMouseoutSquare,
-        onMouseoverSquare: onMouseoverSquare,
-        onSnapEnd: onSnapEnd
-    };
+    function createBoard(pieceSet) {
+        var cfg = {
+            cameraControls: true,
+            draggable: true,
+            position: 'start',
+            onDrop: onDrop,
+            onMouseoutSquare: onMouseoutSquare,
+            onMouseoverSquare: onMouseoverSquare,
+            onSnapEnd: onSnapEnd
+        };
+        if (board3D) {
+            if (pieceSet) {
+                if (pieceSet === 'minions') {
+                    cfg.whitePieceColor = 0xFFFF00;
+                    cfg.blackPieceColor = 0xCC00CC;
+                    cfg.lightSquareColor = 0x888888;
+                    cfg.darkSquareColor = 0x666666;
+                }
+                cfg.pieceSet = 'assets/chesspieces/' + pieceSet + '/{piece}.json';
+            }
+            return new ChessBoard3('board', cfg);
+        } else {
+            return new ChessBoard('board', cfg);
+        }
+    }
 
     adjustBoardWidth();
-
-    if (board3D) {
-        board = new ChessBoard3('board', cfg);
-    } else {
-        board = new ChessBoard('board', cfg);
-    }
+    board = createBoard();
 
     $(window).resize(function() {
         adjustBoardWidth();
@@ -398,18 +409,13 @@ window.localStorage.clear();
         var position = board.position();
         var orientation = board.orientation();
         board.destroy();
-        $('#board').empty();
         board3D = !board3D;
         adjustBoardWidth();
         dimBtn.val(board3D? '2D' : '3D');
         setTimeout(function () {
-            if (board3D) {
-                board = new ChessBoard3('board', cfg);
-            } else {
-                board = new ChessBoard('board', cfg);
-            }
+            board = createBoard($('#piecesMenu').val());
             board.orientation(orientation);
-            board.position(position, false);
+            board.position(position);
             $("#dimensionBtn").prop('disabled', false);
         });
     });
@@ -511,6 +517,14 @@ window.localStorage.clear();
             engine.postMessage('ucinewgame');
             updateScoreGauge(0); // they each act a little differently
         }
+    });
+
+    $('#piecesMenu').change(function() {
+        var fen = board.position();
+        board.destroy();
+        board = createBoard($('#piecesMenu').val());
+        board.position(fen);
+        adjustBoardWidth();
     });
 
     updateStatus();

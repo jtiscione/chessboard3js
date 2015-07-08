@@ -56,9 +56,6 @@ em {
     text-decoration: underline;
 }
 
-.clearBoth {
-    clear: both;
-}
 .row {
     clear: both;
     margin: 0;
@@ -103,5 +100,4 @@ em {
 .blueButton:active {
     position:relative;
     top:1px;
-
-}/* prettyprint.js stuff */
+}
