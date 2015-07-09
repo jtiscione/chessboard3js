@@ -9,24 +9,7 @@
 /*Compatibility tricks:
  * backwards for old MSIEs (to 5.5)
  * sideways for seed command-line javascript.*/
-var p4_log;
-if (this.imports !== undefined &&
-    this.printerr !== undefined){//seed or gjs
-    p4_log = function(){
-        var args = Array.prototype.slice.call(arguments);
-        printerr(args.join(', '));
-    };
-}
-else if (this.console === undefined){//MSIE
-    p4_log = function(){};
-}
-else {
-    p4_log = function(){console.log.apply(console, arguments);};
-}
-
-/*MSIE Date.now backport */
-if (Date.now === undefined)
-    Date.now = function(){return (new Date).getTime();};
+var p4_log = function(){console.log.apply(console, arguments);};
 
 /* The pieces are stored as numbers between 2 and 13, inclusive.
  * Empty squares are stored as 0, and off-board squares as 16.
@@ -38,7 +21,6 @@ if (Date.now === undefined)
  *     piece & 8  -> diagonal moves
  */
 var P4_PAWN = 2, P4_ROOK = 4, P4_KNIGHT = 6, P4_BISHOP = 8, P4_QUEEN = 12, P4_KING = 10;
-var P4_EDGE = 16;
 
 /* in order, even indices: <nothing>, pawn, rook, knight, bishop, king, queen. Only the
  * even indices are used.*/
@@ -93,7 +75,7 @@ var P4_INITIAL_BOARD = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 1
 
 /*use javascript typed arrays rather than plain arrays
  * (faster in some browsers, unsupported in others, possibly slower elsewhere) */
-var P4_USE_TYPED_ARRAYS = this.Int32Array !== undefined;
+var P4_USE_TYPED_ARRAYS = true; //this.Int32Array !== undefined;
 
 var P4_PIECE_LUT = { /*for FEN, PGN interpretation */
     P: 2,
@@ -267,7 +249,6 @@ function p4_prepare(state){
                 var dx = Math.abs(kx[1 - c] - x);
                 var dy = Math.abs(ky[1 - c] - y);
                 var our_dx = Math.abs(kx[c] - x);
-                var our_dy = Math.abs(ky[c] - y);
 
                 var d = Math.max(Math.sqrt(dx * dx + dy * dy), 1) + 1;
                 var mul = multipliers[c]; /*(mul < 1) <==> we're winning*/
@@ -512,7 +493,7 @@ function p4_parse(state, colour, ep, score) {
 function p4_check_castling(board, s, colour, dir, side){
     var e;
     var E;
-    var m, p;
+    var p;
     var knight = colour + P4_KNIGHT;
     var diag_slider = P4_BISHOP | colour;
     var diag_mask = 27;
@@ -637,7 +618,6 @@ function p4_optimise_piece_list(state){
         p4_parse(state, 0, 0, 0),
         p4_parse(state, 1, 0, 0)
     ];
-    var weights = state.weights;
     var board = state.board;
     for (var colour = 0; colour < 2; colour++){
         var our_values = state.values[colour];
@@ -657,21 +637,22 @@ function p4_optimise_piece_list(state){
         }
         /* Find the best score for each piece by pure static weights,
          * ignoring captures, which have their own path to the top. */
+        var mv, x;
         for(i = movelist.length - 1; i >= 0; i--){
-            var mv = movelist[i];
+            mv = movelist[i];
             var score = mv[0];
             s = mv[1];
             e = mv[2];
             if(! board[e]){
-                var x = scores[s];
+                x = scores[s];
                 x.score = Math.max(x.score, score);
             }
         }
         /* moving out of a threat is worth considering, especially
          * if it is a pawn and you are not.*/
         for(i = threats.length - 1; i >= 0; i--){
-            var mv = threats[i];
-            var x = scores[mv[2]];
+            mv = threats[i];
+            x = scores[mv[2]];
             if (x !== undefined){
                 var S = board[mv[1]];
                 var r = (1 + x.piece > 3 + S < 4) * 0.01;
@@ -698,7 +679,6 @@ function p4_optimise_piece_list(state){
 function p4_findmove(state, level, colour, ep){
     p4_prepare(state);
     p4_optimise_piece_list(state);
-    var board = state.board;
     if (arguments.length == 2){
         colour = state.to_play;
         ep = state.enpassant;
@@ -820,9 +800,9 @@ function p4_make_move(state, s, e, promotion){
     var old_pieces = state.pieces.concat();
     var our_pieces = old_pieces[moved_colour];
     var dest = state.pieces[moved_colour] = [];
+    var x;
     for (var i = 0; i < our_pieces.length; i++){
-        var x = our_pieces[i];
-        var pp = x[0];
+        x = our_pieces[i];
         var ps = x[1];
         if (ps != s && ps != rs){
             dest.push(x);
@@ -837,7 +817,7 @@ function p4_make_move(state, s, e, promotion){
         dest = state.pieces[1 - moved_colour] = [];
         var gone = ep_taken ? ep_position : e;
         for (i = 0; i < their_pieces.length; i++){
-            var x = their_pieces[i];
+            x = their_pieces[i];
             if (x[1] != gone){
                 dest.push(x);
             }
@@ -937,9 +917,6 @@ var P4_MOVE_FLAG_CASTLE_QUEEN = 32;
 var P4_MOVE_FLAG_DRAW = 64;
 
 var P4_MOVE_ILLEGAL = 0;
-var P4_MOVE_MISSED_MATE = P4_MOVE_FLAG_CHECK | P4_MOVE_FLAG_MATE;
-var P4_MOVE_CHECKMATE = P4_MOVE_FLAG_OK | P4_MOVE_FLAG_CHECK | P4_MOVE_FLAG_MATE;
-var P4_MOVE_STALEMATE = P4_MOVE_FLAG_OK | P4_MOVE_FLAG_MATE;
 
 function p4_move(state, s, e, promotion){
     var board = state.board;
@@ -961,7 +938,6 @@ function p4_move(state, s, e, promotion){
     }
     if (promotion === undefined)
         promotion = P4_QUEEN;
-    var E=board[e];
     var S=board[s];
 
     /*See if this move is even slightly legal, disregarding check.
@@ -1150,16 +1126,18 @@ function p4_jump_to_moveno(state, moveno){
      * enough to cover, eg, held references to board. */
     var attr, dest;
     for (attr in state2){
-        var src = state2[attr];
-        if (attr instanceof Array){
-            dest = state[attr];
-            dest.length = 0;
-            for (i = 0; i < src.length; i++){
-                dest[i] = src[i];
+        if (state2.hasOwnProperty(attr)) {
+            var src = state2[attr];
+            if (attr instanceof Array) {
+                dest = state[attr];
+                dest.length = 0;
+                for (i = 0; i < src.length; i++) {
+                    dest[i] = src[i];
+                }
             }
-        }
-        else {
-            state[attr] = src;
+            else {
+                state[attr] = src;
+            }
         }
     }
     state.prepared = false;
@@ -1290,7 +1268,7 @@ function p4_fen2state(fen, state){
         /*have a guess based on entropy and pieces remaining*/
         var pieces = 0;
         var mix = 0;
-        var p, q, r;
+        var p, q;
         for (y = 20; y < 100; y+=10){
             for (x = 1; x < 9; x++){
                 p = board[y + x] & 15;
@@ -1434,7 +1412,6 @@ function p4_interpret_movestring(state, str){
     var dest = m[2];
     var queen = m[3];
     var s, e, q;
-    var moves, i;
     if (src == '' || src == undefined){
         /* a single coordinate pawn move */
         e = p4_destringify_point(dest);
@@ -1577,28 +1554,24 @@ var ENGINE_NAME         = 'p4wn, AKA 5k chess';
 var ENGINE_AUTHOR       = 'Douglas Bagnall, ported to JSUCI by Edmund Moshammer';
 var ENGINE_OPTIONS      = [];
 
-var FUNCTION_SETOPTION  = function (option, value) {}
-var FUNCTION_UCINEWGAME = function () {_state = p4_new_game();}
+var FUNCTION_UCINEWGAME = function () {_state = p4_new_game();};
 var FUNCTION_POSITION   = function (fen, moves) {
     p4_fen2state(fen, _state);
     var m = moves.split(' ');
     for (var i = 0; i < m.length; i++) p4_move(_state, m[i], undefined, undefined);
-}
+};
 var FUNCTION_GO         = function (tc) {
     var depth = +tc[8];
     if (!depth) depth = 5;
-    mv = _state.findmove(depth);
+    var mv = _state.findmove(depth);
 
-    var promotion = ''
+    var promotion = '';
     var piece = _state.board[mv[0]] & 14;
     if (piece == P4_PAWN && (mv[1] > 90 || mv[1] < 30)) promotion = 'q';
 
     postMessage('bestmove ' + p4_stringify_point(mv[0]) + p4_stringify_point(mv[1]) + promotion);
     postMessage('info depth ' + depth + ' score cp ' + mv[2]);
-}
-var FUNCTION_PONDERHIT  = function () {}
-var FUNCTION_STOP       = function () {}
-var FUNCTION_QUIT       = function () {}
+};
 
 var FEN_STARTPOSITION = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
