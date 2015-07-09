@@ -1,6 +1,10 @@
+var flag = window.Int32Array !== undefined;
+console.log(flag);
 $(function() {
     var engine = new Worker("js/lozza.js");
+    console.log("GUI: uci");
     engine.postMessage("uci");
+    console.log("GUI: ucinewgame");
     engine.postMessage("ucinewgame");
 
     var moveList = [], scoreList =[];
@@ -20,12 +24,10 @@ $(function() {
     var engineRunning = false;
 
     // don't let the user press buttons while other button clicks are still processing
-
     var board3D = ChessBoard3.webGLEnabled();
-    //board3D = false;
 
     if (!board3D) {
-        swal("WebGL not supported.", "Using a 2D board...");
+        swal("WebGL unsupported or disabled.", "Using a 2D board...");
         $('#dimensionBtn').remove();
     }
 
@@ -244,6 +246,7 @@ $(function() {
         // illegal move
         if (move === null) return 'snapback';
         if (cursor === 0) {
+            console.log("GUI: ucinewgame");
             engine.postMessage("ucinewgame");
         }
         moveList = moveList.slice(0, cursor);
@@ -370,9 +373,11 @@ $(function() {
             var msg = "position fen " + game.fen();
             console.log("GUI: "+msg);
             engine.postMessage(msg);
-            var msg = 'go depth ' + $('#searchDepth').val();
+            msg = 'go movetime ' + $('#moveTime').val();
+            console.log(msg);
             engine.postMessage(msg);
             engine.onmessage = function (event) {
+                console.log("ENGINE: "+event.data);
                 var best = parseBestMove(event.data);
                 if (best !== undefined) {
                     var currentFEN = game.fen();
@@ -438,7 +443,9 @@ $(function() {
             console.log("valid: "+fenCheck.valid);
             if (fenCheck.valid) {
                 game = new Chess(fen);
+                console.log("GUI: ucinewgame");
                 engine.postMessage('ucinewgame');
+                console.log("GUI: position fen " + fen);
                 engine.postMessage('position fen '+ fen);
                 board.position(fen);
                 fenEl.val(fen);
@@ -470,10 +477,11 @@ $(function() {
             var pgnGame = new Chess();
             if (pgnGame.load_pgn(pgn)) {
                 game = pgnGame;
-                engine.postMessage('ucinewgame');
-                engine.postMessage('position fen ' + game.fen());
                 var fen = game.fen();
-                console.log("game.fen(): "+game.fen());
+                console.log("GUI: ucinewgame");
+                engine.postMessage('ucinewgame');
+                console.log("GUI: position fen " + fen);
+                engine.postMessage('position fen ' + game.fen());
                 board.position(fen, false);
                 fenEl.val(game.fen());
                 pgnEl.empty();
@@ -503,6 +511,7 @@ $(function() {
         cursor = 0;
         board.start();
         board.orientation('white');
+        console.log("GUI: ucinewgame");
         engine.postMessage('ucinewgame');
         updateScoreGauge(0);
     });
@@ -513,7 +522,9 @@ $(function() {
             var jsURL = $("#engineMenu").val();
             engine.terminate();
             engine = new Worker(jsURL);
+            console.log("GUI: uci");
             engine.postMessage('uci');
+            console.log("GUI: ucinewgame");
             engine.postMessage('ucinewgame');
             updateScoreGauge(0); // they each act a little differently
             if (jsURL.match(/p4wn/)) {
