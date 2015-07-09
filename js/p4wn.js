@@ -1594,4 +1594,4 @@ onmessage = function(e) {
     else if (re = (/go(?: searchmoves ((?:\w\d\w\d\w? ?)+)| (ponder)| wtime (\d+)| btime (\d+)| winc (\d+)| binc (\d+)| movestogo (\d+)| depth (\d+)| nodes (\d+)| mate (\d+)| movetime (\d+)| (infinite))+/).exec(msg)) {
         FUNCTION_GO(re);
     }
-}
+};
