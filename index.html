@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="keywords" content="Chess, Chessboard, Javascript, Play Chess, Javascript Chess, three.js, chessboard.js, chessboard3.js">
+        <title>chessboard3.js</title>
+
+        <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon" />
+
+        <link type="text/css" rel="stylesheet" href="css/site.css">
+        <link type="text/css" rel="stylesheet" href="css/chessboard.css">
+        <link type="text/css" rel="stylesheet" href="css/prettyprint.css">
+
+        <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+        <script type="text/javascript" src="js/json3.min.js"></script>
+        <script type="text/javascript" src="js/chessboard.js"></script>
+
+
+        <script type="text/javascript" src="js/three.min.js"></script>
+        <script type="text/javascript" src="js/tween.min.js"></script>
+        <script type="text/javascript" src="js/helvetiker_regular.typeface.js"></script>
+        <script type="text/javascript" src="js/OrbitControls.js"></script>
+        <script type="text/javascript" src="js/chessboard3.js"></script>
+
+        <script type="text/javascript" src="js/prettify.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+    </head>
+    <body onload="prettyPrint()">
+        <header id="header">
+            <h1>chessboard3.js</h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html"><input type="button" class="blueButton" value="Home"></a></li>
+                    <li><a href="docs.html"><input type="button" class="blueButton" value="Documentation"></a></li>
+                    <li><a href="play.html"><input type="button" class="blueButton" value="Play"></a></li>
+                    <li><a href="releases/0.1.0/chessboard3js-0.1.0.zip"><input type="button" class="blueButton" value="Download"></a></li>
+                </ul>
+            </nav>
+        </header>
+        <div class="banner">
+            <p>Embed a chessboard on your web site in 3D with chessboard3.js, a JavaScript library based on three.js and WebGL.</p>
+            <p>It mirrors the API of <a href="http://chessboardjs.com">chessboard.js</a>, a 2D board library by <a href="https://github.com/oakmac/chessboardjs">Chris Oakman</a>, so that switching between the two is easy.</p>
+        </div>
+        <div class="row">
+            <div class="leftcol">
+                <h2>Simplest possible usage:</h2>
+                <h4>HTML</h4>
+                <pre class="prettyprint">&lt;div id="board1" style="width: 600px"&gt;&lt;/div&gt;</pre>
+                <h4>JavaScript</h4>
+                <pre class="prettyprint">var board1 = new ChessBoard3('board1', 'start');</pre>
+                <p>
+                    These two lines create a board with default settings, for illustrating the position supplied to the second argument to the constructor- either as a FEN string or 'start' for the starting position.
+                </p>
+                <p>
+                    This is a common use case for chessboard.js, and will work with chessboard3.js, although it's not reommended since 3D is really too heavyweight for simply illustrating a position. In most cases, you would pass an object to the constructor, not a FEN string.
+                </p>
+            </div>
+            <div class="rightcol">
+                <div id="board1" style="width:600px"></div>
+                <p>(By default, pieces are not draggable.)</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="leftcol">
+                <h2>Customization</h2>
+                <h4>HTML</h4>
+                  <pre class="prettyprint">&lt;div id="board2" style="width:600px"&gt;&lt;/div&gt;
+&lt;input type="button" id="startBtn" value="Start" /&gt;
+&lt;input type="button" id="clearBtn" value="Clear" /&gt;
+&lt;input type="button" id="flipBtn" value="Flip" /&gt;
+&lt;div id="FEN"&gt;&lt;/div&gt;</pre>
+                <h4>JavaScript</h4>
+                <pre class="prettyprint">
+var board2 = new ChessBoard3('board2', {
+    draggable: true,
+    dropOffBoard: 'trash',
+    sparePieces: true
+    onChange: function(oldPos, newPos) {
+        $("#FEN").text(ChessBoard3.objToFen(newPos));
+      }
+    });
+$('#startBtn').on('click', board2.start);
+$('#clearBtn').on('click', board2.clear);
+$('#flipBtn').on('click', board2.flip);</pre>
+                The second argument can also be a configuration object. Here we let the user set up the board, and see the current position as a FEN string.
+            </div>
+            <div class="rightcol">
+                <div id="board2" style="width:600px;"></div>
+                <input type="button" id="startBtn" value="Start"/>
+                <input type="button" id="clearBtn" value="Clear"/>
+                <input type="button" id="flipBtn" value="Flip"/>
+                <p id="FEN">8/8/8/8/8/8/8/8</p>
+                <p>Here you can drag pieces onto the board and see the corresponding FEN.</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="leftcol">
+                <h2>Integrating chessboard3.js and chessboard.js</h2>
+                <h4>HTML</h4>
+                <pre class="prettyprint">&lt;div id="outer"&gt;
+  &lt;div id="inner"&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;input type="button" id="2D" value="2D"/&gt;
+&lt;input type="button" id="3D" value="3D"/&gt;
+</pre>
+                <h4>JavaScript</h4>
+                <pre class="prettyprint">var sampleConfig =
+  position: 'start',
+  draggable : true,
+  dropOffBoard: 'snapback'
+};
+var board;
+function setUpBoard(dimensions) {
+  var currentPosition = 'start';
+  if (board !== undefined) {
+    currentPosition = board.position();
+    board.destroy();
+  }
+  if (dimensions >= 3) {
+    $('#inner').css('width', '600px');
+    $('#outer').css('padding', '');
+    board = new ChessBoard3('inner', sampleConfig);
+  } else {
+    $('#inner').css('width', '450px');
+    $('#outer').css('padding', '0px 75px 0px 75px');
+    board = new ChessBoard('inner', sampleConfig);
+  }
+  board.position(currentPosition, false);
+}
+$('#2D').on('click', function() {setUpBoard(2);});
+$('#3D').on('click', function() {setUpBoard(3);});
+setUpBoard(2); // start with a 2D board
+</pre>
+            </div>
+            <div class="rightcol">
+                <div id="outer">
+                    <div id="inner"></div>
+                </div>
+                <input type="button" id="2D" value="2D"/>
+                <input type="button" id="3D" value="3D"/>
+                <p style="text-align: left">
+                    You can easily switch between 2D and 3D boards, since chessboard.js and chessboard3.js expose the
+                    same API. You can use chessboard.js as a fallback library, especially if WebGL is not supported
+                    in the browser.
+                    One major difference is in the aspect ratio. While chessboard.js sets the widget height to be equal
+                    to the width in order to make a square widget, chessboard3.js sets its height to 75% of the width
+                    for a 4:3 aspect ratio. This example code fiddles a bit with CSS widths and padding so that the 2D
+                    board doesn't gobble up extra page height when it appears.
+                </p>
+            </div>
+        </div>
+        <footer id="footer">
+            <p>Copyright 2015 Jason Tiscione; chessboard3.js is released under the MIT license. The repository for this project is on <a href="https://github.com/jtiscione/chessboard3js">GitHub.</a></p>
+            <p>Please send questions, comments, criticisms to <i>&#116;&#105;&#115;&#099;&#105;&#111;&#110;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;.</i></p>
+        </footer>
+    </body>
+</html>

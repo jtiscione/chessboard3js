@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="keywords" content="Chess, Chessboard, Javascript, Play Chess, Javascript Chess, three.js, chessboard.js, chessboard3.js">
+        <title>chessboard3.js</title>
+
+        <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon" />
+
+        <link type="text/css" rel="stylesheet" href="css/site.css">
+        <link type="text/css" rel="stylesheet" href="css/chessboard.css">
+        <link type="text/css" rel="stylesheet" href="css/play.css">
+        <link type="text/css" rel="stylesheet" href="css/sweetalert.css">
+        <script type="text/javascript" src="js/sweetalert.min.js"></script>
+
+        <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+        <script type="text/javascript" src="js/json3.min.js"></script>
+
+        <script type="text/javascript" src="js/three.min.js"></script>
+        <script type="text/javascript" src="js/tween.min.js"></script>
+        <script type="text/javascript" src="js/helvetiker_regular.typeface.js"></script>
+        <script type="text/javascript" src="js/OrbitControls.js"></script>
+        <script type="text/javascript" src="js/chessboard3.js"></script>
+
+        <!--Use chessboard.js as a fallback library -->
+        <script type="text/javascript" src="js/chessboard.js"></script>
+
+        <!-- game state, move validation, PGN, etc -->
+        <script type="text/javascript" src="js/chess.js"></script>
+
+        <script type="text/javascript" src="js/raphael-min.js"></script>
+        <script type="text/javascript" src="js/jquery.sonic-gauge.js"></script>
+
+        <script type="text/javascript" src="js/play.js"></script>
+    </head>
+    <body>
+        <header id="header">
+            <h1>chessboard3.js</h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html"><input type="button" class="blueButton" value="Home"></a></li>
+                    <li><a href="docs.html"><input type="button" class="blueButton" value="Documentation"></a></li>
+                    <li><a href="play.html"><input type="button" class="blueButton" value="Play"></a></li>
+                    <li><a href="releases/0.1.0/chessboard3js-0.1.0.zip"><input type="button" class="blueButton" value="Download"></a></li>
+                </ul>
+            </nav>
+        </header>
+        <div class="banner" id="banner">
+            <p>Demo - Play using chessboard3.js against several [JavaScript] chess engines (stockfish, lozza, and p4wn). This example uses <a href="https://github.com/jhlywa/chess.js/">chess.js</a> for move validation.</p>
+        </div>
+        <article id="container">
+            <div id="board"></div>
+            <div id="side">
+                <div class="buttonpanel">
+                    <input type="button" class="yellowButton" id="startBtn" value="&lt;&lt;">
+                    <input type="button" class="yellowButton" id="backBtn" value="&lt;">
+                    <input type="button" class="yellowButton" id="forwardBtn" value="&gt;">
+                    <input type="button" class="yellowButton" id="endBtn" value="&gt;&gt;">
+                    </div>
+                <div class ="buttonpanel">
+                    <input type="button" class="yellowButton" id="hintBtn" value="HINT">
+                    <input type="button" class="yellowButton" id="flipBtn" value="FLIP">
+                    <input type="button" class="yellowButton" id="dimensionBtn" value="2D">
+                    <input type="button" class="yellowButton" id="resetBtn" value="RESET">
+                </div>
+                <div id="status"></div>
+                <div id="gaugebox">
+                    <div id="optionsBox">
+                        <label for="piecesMenu">CHESS SET:</label>
+                        <select id="piecesMenu">
+                            <option value="iconic" selected>Iconic</option>
+                            <option value="bauhaus">Bauhaus</option>
+                            <option value="classic">Classic</option>
+                            <option value="mueller">Mueller</option>
+                            <option value="minions">Minions</option>
+                        </select>
+                        <br>
+                        <label for="engineMenu">CHESS ENGINE:</label>
+                        <select id="engineMenu">
+                            <option value="js/p4wn.js">p4wn</option>
+                            <option value="js/lozza.js" selected>Lozza</option>
+                            <option value="js/stockfish.js">stockfish</option>
+                        </select>
+                        <br>
+                        <label for="moveTime">MOVE TIME (seconds):</label>
+                        <select id="moveTime">
+                            <option value="100">0.1</option>
+                            <option value="200">0.2</option>
+                            <option value="500">0.5</option>
+                            <option value="1000" selected>1</option>
+                            <option value="2000">2</option>
+                            <option value="5000">5</option>
+                            <option value="10000">10</option>
+                            <option value="20000">20</option>
+                        </select>
+                        <br>
+                        <label for="promotion">PROMOTE PAWNS TO:</label>
+                        <select id="promotion">
+                            <option value="q">queens</option>
+                            <option value="n">knights</option>
+                            <option value="r">rooks</option>
+                            <option value="b">bishops</option>
+                        </select>
+                    </div>
+                    <div id="gauge"></div>
+                </div>
+                <div id="pgnBox">
+                    <button class="littleButton" id="setPGN">SET PGN</button>
+                    <div id="pgn"></div>
+                </div>
+                <div id="fenBox">
+                    <button class="littleButton" id="setFEN">SET FEN</button>
+                    <span id="fen"></span>
+                </div>
+            </div>
+        </article>
+        <footer id="footer">
+            <p>Copyright 2015 Jason Tiscione; chessboard3.js is released under the MIT license. The repository for this project is on <a href="https://github.com/jtiscione/chessboard3js">GitHub.</a></p>
+            <p>Please send questions, comments, criticisms to <i>&#116;&#105;&#115;&#099;&#105;&#111;&#110;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;.</i></p>
+        </footer>
+    </body>
+</html>

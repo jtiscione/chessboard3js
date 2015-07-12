@@ -1,0 +1,51 @@
+h2 {
+    font-family: helvetica Neue, helvetica, sans-serif;
+    text-align: center;
+}
+p {
+    font-family: helvetica Neue, helvetica, sans-serif;
+}
+p span {
+    font-family: monospace;
+}
+article {
+    margin: auto;
+    padding: 25px;
+    text-align: center;
+}
+ol {
+    text-align: left;
+}
+table {
+    border-collapse: collapse;
+}
+th, td {
+    border: none;
+    padding: 10px;
+}
+th {
+    background-color: #000000;
+    color: #fff;
+}
+table tr {
+    font-family: helvetica Neue, helvetica, sans-serif;
+    font-weight: bolder;
+    font-size: 15px;
+}
+table tr td:last-child {
+    text-align: left;
+}
+tr:nth-of-type(even) {
+    background-color: #F3F3F3;
+}
+tr:nth-of-type(odd) {
+    background-color: #BBBBBB;
+}
+
+table tr span {
+    font-family: monospace;
+}
+
+.highlight {
+    background: yellow;
+}
