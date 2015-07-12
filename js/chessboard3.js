@@ -707,11 +707,10 @@
                         var square = 'abcdefgh'.charAt(j) + (i + 1);
                         var squareMaterial = (((i % 2) === 0) ^ ((j % 2) === 0) ? lightSquareMaterial : darkSquareMaterial);
                         var squareGeometry = new THREE.BoxGeometry(2, 0.5, 2);
-                        var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial);
+                        var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial.clone());
                         squareMesh.position.set(tx, -0.25, tz);
-                        squareGeometry.computeVertexNormals();
                         squareGeometry.computeFaceNormals();
-                        squareGeometry.computeTangents();
+                        squareGeometry.computeVertexNormals();
                         squareMesh.receiveShadow = true;
                         SQUARE_MESH_IDS[square] = squareMesh.id;
                         squareMesh.tag = square;
