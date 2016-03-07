@@ -237,6 +237,8 @@
             var START_POSITION = fenToObj(START_FEN);
 
             var containerEl;
+            var addedToContainer = false;
+
             var widget = {};
 
             var RENDERER, SCENE, LABELS, CAMERA, CAMERA_CONTROLS;
@@ -554,9 +556,6 @@
                     transparent: true
                 });
 
-                RENDERER.shadowMapEnabled = true;
-                RENDERER.shadowMapType = THREE.PCFSoftShadowMap;
-
                 var backgroundColor;
                 if (cfg.hasOwnProperty('backgroundColor') && typeof cfg.backgroundColor === 'number') {
                     backgroundColor = cfg.backgroundColor;
@@ -566,7 +565,6 @@
                 RENDERER.setClearColor(backgroundColor, 1);
 
                 RENDERER.setSize(containerEl.clientWidth, Math.round(containerEl.clientWidth * ASPECT_RATIO));
-                containerEl.appendChild(RENDERER.domElement);
 
                 SCENE = new THREE.Scene();
                 //SCENE.add(new THREE.AxisHelper(3));
@@ -595,8 +593,12 @@
 
 
                 if ('ontouchstart' in document.documentElement) {
-                    RENDERER.domElement.addEventListener('touchstart', mouseDown, true);
-                    RENDERER.domElement.addEventListener('touchmove', mouseMove, true);
+                    RENDERER.domElement.addEventListener('touchstart', function(e) {
+                        mouseDown(e, true);
+                    }, true);
+                    RENDERER.domElement.addEventListener('touchmove', function(e) {
+                        mouseMove(e, true);
+                    }, true);
                     RENDERER.domElement.addEventListener('touchend', mouseUp, true);
                 }
 
@@ -1746,18 +1748,24 @@
             //                            BROWSER EVENTS                            //
             // ---------------------------------------------------------------------//
 
-            function offset(e) {
+            function offset(e, useTouchObject) {
                 var target = e.target || e.srcElement,
-                    rect = target.getBoundingClientRect(),
+                    rect = target.getBoundingClientRect();
+                var offsetX, offsetY;
+                if (useTouchObject && e.touches.length > 0) {
+                    offsetX = e.touches[0].clientX - rect.left;
+                    offsetY = e.touches[0].clientY - rect.top;
+                } else {
                     offsetX = e.clientX - rect.left,
                     offsetY = e.clientY - rect.top;
+                }
                 return {
                     x: offsetX,
                     y: offsetY
                 };
             }
 
-            function mouseDown(e) {
+            function mouseDown(e, useTouchObject) {
                 e.preventDefault();
                 if (DRAG_INFO) {
                     return;
@@ -1765,7 +1773,7 @@
                 if (!cfg.draggable) {
                     return;
                 }
-                var coords = offset(e);
+                var coords = offset(e, useTouchObject);
                 var dragged = raycast(coords.x, coords.y);
                 if (dragged && dragged.piece !== undefined) {
                     DRAG_INFO = dragged;
@@ -1778,9 +1786,9 @@
                 }
             }
 
-            function mouseMove(e) {
+            function mouseMove(e, useTouchObject) {
                 e.preventDefault();
-                var coords = offset(e);
+                var coords = offset(e, useTouchObject);
                 if (DRAG_INFO) {
                     updateDraggedPiece(coords.x, coords.y);
                 } else {
@@ -1938,12 +1946,19 @@
                     }
                     if (RENDER_FLAG || DRAG_INFO !== null || ANIMATION_HAPPENING || cameraMoved) {
                         var goahead = true;
-                        if (cfg.hasOwnProperty('onRender') && typeof cfg.onReady === 'function') {
+                        if (cfg.hasOwnProperty('onRender') && typeof cfg.onRender === 'function') {
                             if (cfg.onRender(SCENE, deepCopy(SQUARE_MESH_IDS), deepCopy(PIECE_MESH_IDS), deepCopy(CURRENT_POSITION)) === false) {
                                 goahead = false;
                             }
                         }
                         if (goahead) {
+                            if (!addedToContainer) {
+                                while (containerEl.firstChild) {
+                                    containerEl.removeChild(containerEl.firstChild);
+                                }
+                                containerEl.appendChild(RENDERER.domElement);
+                                addedToContainer = true;
+                            }
                             RENDERER.render(SCENE, CAMERA);
                             RENDER_FLAG = false;
                         } else {
