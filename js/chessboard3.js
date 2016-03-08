@@ -28,6 +28,7 @@
         sw1 : 'wK', sw2: 'wQ', sw3: 'wR', sw4: 'wB', sw5: 'wN', sw6: 'wP',
         sb1 : 'bK', sb2: 'bQ', sb3: 'bR', sb4: 'bB', sb5: 'bN', sb6: 'bP'
     };
+    var DEFAULT_WIDTH = 500;
     var ASPECT_RATIO = 0.75;
 
     // ---------------------------------------------------------------------//
@@ -1879,10 +1880,16 @@
                     expandConfig() !== true) {
                     return;
                 }
-                var pxWidth = parseInt(containerEl.style.width.replace(/px/, ''));
-                var pxHeight = parseInt(containerEl.style.height.replace(/px/, ''));
-
-                containerEl.style.height = Math.max(pxHeight, pxWidth * 3 / 4).toString() + "px";
+                var pxWidth = DEFAULT_WIDTH;
+                if (containerEl.style.width && containerEl.style.width.match(/px/)) {
+                    pxWidth = parseInt(containerEl.style.width.replace(/px/, ''));
+                }
+                var pxHeight = pxWidth * 3 / 4;
+                if (!containerEl.style.height && containerEl.style.height.match(/px/)) {
+                    pxHeight = Math.max(pxHeight, parseInt(containerEl.style.height.replace(/px/, '')));
+                }
+                containerEl.style.width = pxWidth.toString() + 'px';
+                containerEl.style.height = pxHeight.toString() + 'px';
 
                 widget.resize();
                 prepareScene();

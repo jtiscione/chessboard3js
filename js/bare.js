@@ -299,9 +299,7 @@ $(function() {
             onDrop: onDrop,
             onMouseoutSquare: onMouseoutSquare,
             onMouseoverSquare: onMouseoverSquare,
-            onSnapEnd: onSnapEnd,
-            onLoadProgress: function(s) {console.log(s);},
-            localStorage: false
+            onSnapEnd: onSnapEnd
         };
         if (pieceSet) {
             if (pieceSet === 'minions') {
