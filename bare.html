@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="Chess, Chessboard, Javascript, Play Chess, Javascript Chess, three.js, chessboard.js, chessboard3.js">
+    <title>chessboard3.js</title>
+
+    <link type="text/css" rel="stylesheet" href="css/bare.css">
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <!--
+    <script type="text/javascript" src="http://jtiscione.github.io/chessboard3js/js/chess.js"></script>
+    <script type="text/javascript" src="http://jtiscione.github.io/chessboard3js/js/tween.min.js"></script>
+    <script type="text/javascript" src="http://jtiscione.github.io/chessboard3js/js/helvetiker_regular.typeface.js"></script>
+    <script type="text/javascript" src="http://jtiscione.github.io/chessboard3js/js/OrbitControls.js"></script>
+    <script type="text/javascript" src="http://jtiscione.github.io/chessboard3js/js/chessboard3.js"></script>
+    -->
+    <script type="text/javascript" src="js/chess.js"></script>
+    <script type="text/javascript" src="js/tween.min.js"></script>
+    <script type="text/javascript" src="js/helvetiker_regular.typeface.js"></script>
+    <script type="text/javascript" src="js/OrbitControls.js"></script>
+    <script type="text/javascript" src="js/json3.min.js"></script>
+    <script type="text/javascript" src="js/chessboard3.js"></script>
+    <!-- for the score gauge: -->
+    <!--
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.4/raphael-min.js"></script>
+    <script type="text/javascript" src="http://jtiscione.github.io/chessboard3js/js/jquery.sonic-gauge.js"></script>
+    -->
+    <script type="text/javascript" src="js/raphael-min.js"></script>
+    <script type="text/javascript" src="js/jquery.sonic-gauge.js"></script>
+    <script type="text/javascript" src="js/bare.js"></script>
+</head>
+<body>
+<header id="header">
+    <h1>chessboard3.js</h1>
+</header>
+<article id="container">
+    <div id="board">
+        <h1 class="vertical-align">LOADING...</h1>
+    </div>
+    <div id="side">
+        <div class="buttonpanel">
+            <input type="button" id="startBtn" value="&lt;&lt;">
+            <input type="button" id="backBtn" value="&lt;">
+            <input type="button" id="forwardBtn" value="&gt;">
+            <input type="button" id="endBtn" value="&gt;&gt;">
+        </div>
+        <div class="buttonpanel">
+            <input type="button" id="hintBtn" value="HINT">
+            <input type="button" id="flipBtn" value="FLIP">
+        </div>
+        <div id="status"></div>
+        <div id="leftbox">
+            <div id="optionsBox">
+                <label for="piecesMenu">CHESS SET:</label>
+                <select id="piecesMenu">
+                    <option value="iconic" selected>Iconic</option>
+                    <option value="bauhaus">Bauhaus</option>
+                    <option value="classic">Classic</option>
+                    <option value="mueller">Mueller</option>
+                    <option value="minions">Minions</option>
+                </select>
+                <br>
+                <label for="promotion">PROMOTE PAWNS TO:</label>
+                <select id="promotion">
+                    <option value="q">queens</option>
+                    <option value="n">knights</option>
+                    <option value="r">rooks</option>
+                    <option value="b">bishops</option>
+                </select>
+            </div>
+            <div id="gauge"></div>
+        </div>
+        <div id="pgn"></div>
+        <div id="fen">FEN:</div>
+    </div>
+</article>
+<footer id="footer">
+    <p>Copyright 2015 Jason Tiscione; <a href="http://chessboard3js.com">chessboard3.js</a> is released under the MIT license. The repository for this project is on <a href="https://github.com/jtiscione/chessboard3js">GitHub.</a></p>
+    <p>Please send questions, comments, criticisms to <i>&#116;&#105;&#115;&#099;&#105;&#111;&#110;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;.</i></p>
+</footer>
+</body>
+<script type="text/javascript" id="lozza_chess_engine_web_worker" src="lozza.js"></script>
+</html>

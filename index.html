@@ -33,7 +33,7 @@
                     <li><a href="index.html"><input type="button" class="blueButton" value="Home"></a></li>
                     <li><a href="docs.html"><input type="button" class="blueButton" value="Documentation"></a></li>
                     <li><a href="play.html"><input type="button" class="blueButton" value="Play"></a></li>
-                    <li><a href="releases/0.1.0/chessboard3js-0.1.0.zip"><input type="button" class="blueButton" value="Download"></a></li>
+                    <li><a href="releases/0.1.0/chessboard3js-0.1.1.zip"><input type="button" class="blueButton" value="Download"></a></li>
                 </ul>
             </nav>
         </header>
@@ -56,10 +56,13 @@
                 </p>
             </div>
             <div class="rightcol">
-                <div id="board1" style="width:600px"></div>
+                <div id="board1" style="width:600px">
+                    <h2 class="vertical-align">LOADING...</h2>
+                </div>
                 <p>(By default, pieces are not draggable.)</p>
             </div>
         </div>
+
         <div class="row">
             <div class="leftcol">
                 <h2>Customization</h2>
@@ -85,7 +88,9 @@ $('#flipBtn').on('click', board2.flip);</pre>
                 The second argument can also be a configuration object. Here we let the user set up the board, and see the current position as a FEN string.
             </div>
             <div class="rightcol">
-                <div id="board2" style="width:600px;"></div>
+                <div id="board2" style="width:600px;">
+                    <h2 class="vertical-align">LOADING...</h2>
+                </div>
                 <input type="button" id="startBtn" value="Start"/>
                 <input type="button" id="clearBtn" value="Clear"/>
                 <input type="button" id="flipBtn" value="Flip"/>
