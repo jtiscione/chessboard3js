@@ -32,6 +32,37 @@
     var ASPECT_RATIO = 0.75;
 
     // ---------------------------------------------------------------------//
+    //                               ANIMATION                              //
+    // ---------------------------------------------------------------------//
+
+    var executingTweens = [];
+
+    function startTween(onUpdate, onComplete, duration) {
+        executingTweens.push({
+            onUpdate: onUpdate,
+            onComplete: onComplete,
+            duration: duration,
+            started: window.performance.now()
+        });
+    }
+
+    // invoke frequently
+    function updateAllTweens() {
+        var tweenArray = [];
+        executingTweens.forEach(function(tween) {
+            var rightNow = window.performance.now();
+            var t = (rightNow - tween.started) / tween.duration;
+            if (t < 1) {
+                tween.onUpdate(t);
+                tweenArray.push(tween);
+            } else {
+                tween.onComplete();
+            }
+        });
+        executingTweens = tweenArray;
+    }
+
+    // ---------------------------------------------------------------------//
     //                               UTILITIES                              //
     // ---------------------------------------------------------------------//
 
@@ -654,25 +685,14 @@
                     RENDER_FLAG = true;
                 };
 
-                if (window.TWEEN !== undefined && typeof TWEEN === 'object') {
-                    // interpolate: startingTheta -> targetTheta and startY -> targetY
-                    var tween = new TWEEN.Tween({t: 0})
-                        .to({t: 1}, 1000)
-                        //.easing(TWEEN.Easing.Elastic.InOut)
-                        .onUpdate(function() {
-                            var t = this.t;
-                            var theta = startTheta + t * (targetTheta - startTheta);
-                            var r = startRadius + t * (targetRadius - startRadius);
-                            CAMERA.position.set(r * Math.cos(theta),
-                                startY + t * (targetY - startY),
-                                r * Math.sin(theta));
-                            CAMERA.lookAt(new THREE.Vector3(0,-3,0));
-                        })
-                        .onComplete(end);
-                    tween.start();
-                } else {
-                    end(); // tween.js not available
-                }
+                startTween(function(t) {
+                    var theta = startTheta + t * (targetTheta - startTheta);
+                    var r = startRadius + t * (targetRadius - startRadius);
+                    CAMERA.position.set(r * Math.cos(theta),
+                        startY + t * (targetY - startY),
+                        r * Math.sin(theta));
+                    CAMERA.lookAt(new THREE.Vector3(0, -3, 0));
+                }, end, 1000);
             }
 
             function buildPieceMesh(square, piece) {
@@ -845,24 +865,18 @@
                 if (destSquareMesh && pieceMesh) {
                     var tx_src = pieceMesh.position.x, tz_src = pieceMesh.position.z;
                     var tx_dest = destSquareMesh.position.x, tz_dest = destSquareMesh.position.z;
-                    var tween = new TWEEN.Tween({t: 0})
-                        .to({t: 1}, cfg.moveSpeed)
-                        //.easing(TWEEN.Easing.Elastic.InOut)
-                        .onUpdate(function() {
-                            var t = this.t;
-                            pieceMesh.position.x = tx_src + t * (tx_dest - tx_src);
-                            pieceMesh.position.z = tz_src + t * (tz_dest - tz_src);
-                        })
-                        .onComplete(function() {
-                            PIECE_MESH_IDS[dest] = pieceMesh.id;
-                            if (validOrdinarySquare(src)) {
-                                if (pieceMesh.id === PIECE_MESH_IDS[src]) {
-                                    delete PIECE_MESH_IDS[src];
-                                }
+                    startTween(function(t) {
+                        pieceMesh.position.x = tx_src + t * (tx_dest - tx_src);
+                        pieceMesh.position.z = tz_src + t * (tz_dest - tz_src);
+                    }, function() {
+                        PIECE_MESH_IDS[dest] = pieceMesh.id;
+                        if (validOrdinarySquare(src)) {
+                            if (pieceMesh.id === PIECE_MESH_IDS[src]) {
+                                delete PIECE_MESH_IDS[src];
                             }
-                            completeFn();
-                        });
-                    tween.start();
+                        }
+                        completeFn();
+                    }, cfg.moveSpeed);
                 }
             }
 
@@ -870,16 +884,13 @@
                 if (PIECE_MESH_IDS.hasOwnProperty(square)) {
                     if (validOrdinarySquare(square) && PIECE_MESH_IDS.hasOwnProperty(square)) {
                         var mesh = SCENE.getObjectById(PIECE_MESH_IDS[square]);
-                        var tween = new TWEEN.Tween({t: 1})
-                            .to({t: 0}, cfg.trashSpeed)
-                            .onUpdate(function() {
-                                mesh.opacity = this.t;
-                            }).onComplete(function(){
-                                SCENE.remove(mesh);
-                                delete PIECE_MESH_IDS[square];
-                                completeFn();
-                            });
-                        tween.start();
+                        startTween(function(t) {
+                            mesh.opacity = 1 - t;
+                        }, function() {
+                            SCENE.remove(mesh);
+                            delete PIECE_MESH_IDS[square];
+                            completeFn();
+                        }, cfg.trashSpeed);
                     }
                 }
             }
@@ -888,14 +899,12 @@
                 var mesh = buildPieceMesh(square, piece);
                 mesh.opacity = 0;
                 SCENE.add(mesh);
-                var tween = new TWEEN.Tween({t: 0}).to({t: 1}, cfg.appearSpeed)
-                    .onUpdate(function() {
-                        mesh.opacity = this.t;
-                    }).onComplete(function() {
-                        PIECE_MESH_IDS[square] = mesh.id;
-                        completeFn();
-                    });
-                tween.start();
+                startTween(function(t) {
+                    mesh.opacity = this.t;
+                }, function() {
+                    PIECE_MESH_IDS[square] = mesh.id;
+                    completeFn();
+                }, cfg.appearSpeed);
             }
 
             function doAnimations(a, oldPos, newPos) {
@@ -1300,20 +1309,10 @@
                         ANIMATION_HAPPENING = false;
                         RENDER_FLAG = true;
                     };
-                    if (window.TWEEN !== undefined && typeof TWEEN === 'object') {
-                        var tween = new TWEEN.Tween({t: 0})
-                            .to({t: 1}, 100)
-                            //.easing(TWEEN.Easing.Elastic.InOut)
-                            .onUpdate(function() {
-                                var t = this.t;
-                                DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
-                                DRAG_INFO.mesh.position.z = tz_start + t * (tz_target - tz_start);
-                            })
-                            .onComplete(end);
-                        tween.start();
-                    } else {
-                        end(); // tween.js not available
-                    }
+                    startTween(function(t) {
+                        DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
+                        DRAG_INFO.mesh.position.z = tz_start + t * (tz_target - tz_start);
+                    }, end, 100);
                 }
             }
 
@@ -1695,7 +1694,7 @@
                 }
 
                 var doDrawing = function() {
-                    if (useAnimation === true && window.TWEEN !== undefined && typeof TWEEN === 'object') {
+                    if (useAnimation) {
                         var anims = calculateAnimations(CURRENT_POSITION, position);
                         doAnimations(anims, CURRENT_POSITION, position); // invokes setCurrentPosition() from a callback
                     } else {
@@ -1913,9 +1912,7 @@
 
                 function animate() {
                     requestAnimationFrame(animate);
-                    if (window.TWEEN !== undefined && typeof window.TWEEN === 'object') {
-                        TWEEN.update();
-                    }
+                    updateAllTweens();
                     var cameraPosition = CAMERA.position.clone();
                     if (CAMERA_CONTROLS && CAMERA_CONTROLS.enabled) {
                         CAMERA_CONTROLS.update();
