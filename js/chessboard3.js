@@ -44,6 +44,7 @@
             duration: duration,
             started: window.performance.now()
         });
+        onUpdate(0);
     }
 
     // invoke frequently
@@ -56,6 +57,7 @@
                 tween.onUpdate(t);
                 tweenArray.push(tween);
             } else {
+                tween.onUpdate(1.0);
                 tween.onComplete();
             }
         });
@@ -408,13 +410,6 @@
                     console.log("ChessBoard3 Error 3006: Unable to find three.js revision 71 or greater. \n\nExiting...");
                     return false;
                 }
-                if (!window.JSON ||
-                    typeof JSON.stringify !== 'function' ||
-                    typeof JSON.parse !== 'function') {
-                    window.alert('ChessBoard3 Error 1004: JSON does not exist in this browser. ' +
-                        'Please include a JSON polyfill.\n\nExiting...');
-                    return false;
-                }
                 if (!webGLEnabled()) {
                     window.alert("ChessBoard3 Error 3001: WebGL is not enabled.\n\nExiting...");
                     return false;
@@ -468,6 +463,10 @@
 
                 if (cfg.showNotation !== false) {
                     cfg.showNotation = true;
+                    if (cfg.hasOwnProperty('fontData') !== true ||
+                        (typeof cfg.fontData !== 'string' && typeof cfg.fontData !== 'function')) {
+                        cfg.fontData = 'assets/fonts/helvetiker_regular.typeface.json';
+                    }
                 }
 
                 if (cfg.draggable !== true) {
@@ -721,6 +720,78 @@
                 return mesh;
             }
 
+            function addLabelsToScene() {
+
+                var loader = new THREE.FontLoader();
+
+                var url = null;
+                if (typeof cfg.fontData === 'function') {
+                    url = cfg.fontData();
+                } else if (typeof cfg.fontData === 'string') {
+                    url = cfg.fontData;
+                }
+
+                if (url === null) {
+                    cfg.showNotation = false;
+                    error(2354, e);
+                }
+
+                loader.load(url, function(font) {
+
+                    // Add the file / rank labels
+                    var opts = {
+                        font: font,
+                        size: 0.5,
+                        height: 0.0,
+                        weight: 'normal',
+                        style: 'normal',
+                        curveSegments: 12,
+                        steps: 1,
+                        bevelEnabled: false,
+                        material: 0,
+                        extrudeMaterial: 1
+                    };
+
+                    LABELS = [];
+                    var textGeom;
+                    var label;
+                    var columnLabelText = "abcdefgh".split('');
+                    for (var i = 0; i < 8; i++) {
+                        textGeom = new THREE.TextGeometry(columnLabelText[i], opts);
+                        textGeom.computeBoundingBox();
+                        textGeom.computeVertexNormals();
+                        label = new THREE.Mesh(textGeom, RANK_1_TEXT_MATERIAL);
+                        label.position.x = 2 * i - 7 - opts.size/2;
+                        label.position.y = -0.5;
+                        label.position.z = -9;
+                        LABELS.push(label);
+                        SCENE.add(label);
+                        label = new THREE.Mesh(textGeom, RANK_8_TEXT_MATERIAL);
+                        label.position.x = 2 * i - 7 - opts.size/2;
+                        label.position.y = -0.5;
+                        label.position.z = 9;
+                        LABELS.push(label);
+                        SCENE.add(label);
+                    }
+                    var rankLabelText = "12345678".split('');
+                    for (i = 0; i < 8; i++) {
+                        textGeom = new THREE.TextGeometry(rankLabelText[i], opts);
+                        label = new THREE.Mesh(textGeom, FILE_A_TEXT_MATERIAL);
+                        label.position.x = -9;
+                        label.position.y = -0.5;
+                        label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
+                        LABELS.push(label);
+                        SCENE.add(label);
+                        label = new THREE.Mesh(textGeom, FILE_H_TEXT_MATERIAL);
+                        label.position.x = 9;
+                        label.position.y =  -0.5;
+                        label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
+                        LABELS.push(label);
+                        SCENE.add(label);
+                    }
+                });
+            }
+
             function buildBoard() {
                 var i;
                 for (i = 0; i < 8; i++) {
@@ -741,63 +812,8 @@
                     }
                 }
 
-                // Add the file / rank labels
-                var opts = {
-                    size: 0.5,
-                    height: 0.0,
-                    weight: 'normal',
-                    font: 'helvetiker',
-                    style: 'normal',
-                    curveSegments: 12,
-                    steps: 1
-                };
-
-                LABELS = [];
                 if (cfg.showNotation) {
-                    var textGeom;
-                    var label;
-                    var columnLabelText = "abcdefgh".split('');
-                    for (i = 0; i < 8; i++) {
-                        try {
-                            textGeom = new THREE.TextGeometry(columnLabelText[i], opts);
-                        }
-                        catch (e) {
-                            cfg.showNotation = false;
-                            error(2354, e);
-                            break;
-                        }
-                        label = new THREE.Mesh(textGeom, RANK_1_TEXT_MATERIAL);
-                        label.position.x = 2 * i - 7 - opts.size/2;
-                        label.position.y = -0.5;
-                        label.position.z = -9;
-                        LABELS.push(label);
-                        SCENE.add(label);
-                        label = new THREE.Mesh(textGeom, RANK_8_TEXT_MATERIAL);
-                        label.position.x = 2 * i - 7 - opts.size/2;
-                        label.position.y = -0.5;
-                        label.position.z = 9;
-                        LABELS.push(label);
-                        SCENE.add(label);
-                    }
-                    if (LABELS.length > 0) {
-                        // no issue with missing font file
-                        var rankLabelText = "12345678".split('');
-                        for (i = 0; i < 8; i++) {
-                            textGeom = new THREE.TextGeometry(rankLabelText[i], opts);
-                            label = new THREE.Mesh(textGeom, FILE_A_TEXT_MATERIAL);
-                            label.position.x = -9;
-                            label.position.y = -0.5;
-                            label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
-                            LABELS.push(label);
-                            SCENE.add(label);
-                            label = new THREE.Mesh(textGeom, FILE_H_TEXT_MATERIAL);
-                            label.position.x = 9;
-                            label.position.y =  -0.5;
-                            label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
-                            LABELS.push(label);
-                            SCENE.add(label);
-                        }
-                    }
+                    addLabelsToScene();
                 }
 
                 for (var k = 0; k < LIGHT_POSITIONS.length; k++) {

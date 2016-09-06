@@ -27,12 +27,14 @@
     </nav>
 </header>
 <div class="banner">
-    <p>This is mostly the same API as <a href="http://chessboardjs.com">chessboard.js</a>, and it is well documented with examples there.</p>
-    <p>Differences between chessboard3.js are highlighted below.</p>
+    <p>This is the same API as <a href="http://chessboardjs.com">chessboard.js</a>, with some extensions highlighted below.</p>
 </div>
 <article>
+    <h2>Dependencies</h2>
+    <p>Requires the following libraries: <a href="https://github.com/mrdoob/three.js/releases/tag/r80">three.js</a>, revision 80; and optionally OrbitControls.js (included with three.js download)</p>
+    <p>Also needs JSON files for piece set mesh data and font mesh data, in folder /assets.</p>
     <h2>Configuration</h2>
-    <p>Most of the time, you will pass a configuration object to the ChessBoard3 constructor:</p>
+    <p>Pass a configuration object to the ChessBoard3 constructor:</p>
     <div style="margin-left:200px;margin-right:200px"><pre class="prettyprint">var board = new ChessBoard3('some_div_id', config);</pre></div>
     <p>The <span>config</span> object can have the following properties and methods:</p>
     <table>
@@ -79,6 +81,20 @@
                 If set to <span>'trash'</span>, the user can drag pieces off the board to get rid of them.<br>
                 Otherwise, <span>'snapback'</span> makes those pieces snap back to their original square.<br>
                 Using <span>'trash'</span> generally makes no sense unless <span>'sparePieces'</span> is set to <span>true</span>.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="highlight">fontData</span>
+            </td>
+            <td>
+                <span>string</span> or <span>function</span>
+            </td>
+            <td>
+                <span>'assets/fonts/helvetiker_regular.typeface.json'</span>
+            </td>
+            <td>
+                URL path to the three.js font file. This setting is specific to chessboard3.js.
             </td>
         </tr>
         <tr>
@@ -846,7 +862,7 @@
             </td>
             <td>
                 <span>useAnimation</span> is an optional <span>boolean</span> parameter that defaults to true.<br>
-                If <span>useAnimation</span> is false, or if tween.js has not been loaded, the board position is set instantly.<br>
+                If <span>useAnimation</span> is false, the board position is set instantly.<br>
             </td>
             <td>
                 This is an alias of <span>position('start', useAnimation)</span>.
@@ -900,13 +916,13 @@
                 JSON does not exist; please include a JSON polyfill.
             </td>
             <td>
-                I'm not sure that any browser supporting WebGL doesn't have JSON support, but it checks anyway.
+                May happen on older browsers.
             </td>
         </tr>
         <tr>
             <td>2354</td>
             <td>
-                config.showNotation is true and helvetiker_regular.typeface.js has not been loaded.
+                config.showNotation is true and the font URL (default 'helvetiker_regular.typeface.json') doesn't load.
             </td>
             <td>
                 This is not a fatal error; it omits the notation labels.
