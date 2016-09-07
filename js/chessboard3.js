@@ -1739,15 +1739,11 @@
 
             widget.resize = function() {
                 var w = containerEl.clientWidth;
-                w &= 0xFFFC; // shrink to mod 4
-                var h = w * ASPECT_RATIO;
-                containerEl.style.width = w;
-                containerEl.style.height = h;
                 if (CAMERA) {
                     CAMERA.updateProjectionMatrix();
                 }
                 if (RENDERER) {
-                    RENDERER.setSize(containerEl.clientWidth, containerEl.clientHeight);
+                    RENDERER.setSize(w, w * ASPECT_RATIO);
                 }
                 RENDER_FLAG = true;
             };
@@ -1895,17 +1891,6 @@
                     expandConfig() !== true) {
                     return;
                 }
-                var pxWidth = DEFAULT_WIDTH;
-                if (containerEl.style.width && containerEl.style.width.match(/px/)) {
-                    pxWidth = parseInt(containerEl.style.width.replace(/px/, ''));
-                }
-                var pxHeight = pxWidth * 3 / 4;
-                if (!containerEl.style.height && containerEl.style.height.match(/px/)) {
-                    pxHeight = Math.max(pxHeight, parseInt(containerEl.style.height.replace(/px/, '')));
-                }
-                containerEl.style.width = pxWidth.toString() + 'px';
-                containerEl.style.height = pxHeight.toString() + 'px';
-
                 widget.resize();
                 prepareScene();
                 buildBoard();
