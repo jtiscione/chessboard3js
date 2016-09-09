@@ -636,7 +636,7 @@
                 if (cfg.rotateControls || cfg.zoomControls) {
                     if (THREE.OrbitControls !== undefined) {
                         CAMERA_CONTROLS = new THREE.OrbitControls(CAMERA, RENDERER.domElement, RENDERER.domElement);
-                        CAMERA_CONTROLS.noPan = true;
+                        CAMERA_CONTROLS.enablePan = false;
                         if (cfg.rotateControls) {
                             CAMERA_CONTROLS.minPolarAngle = Math.PI / 2 * 0.1;
                             CAMERA_CONTROLS.maxPolarAngle = Math.PI / 2 * 0.8;
@@ -646,8 +646,9 @@
                         if (cfg.zoomControls) {
                             CAMERA_CONTROLS.minDistance = 12;
                             CAMERA_CONTROLS.maxDistance = 22;
+                            CAMERA_CONTROLS.enableZoom = true;
                         } else {
-                            CAMERA_CONTROLS.noZoom = true;
+                            CAMERA_CONTROLS.enableZoom = false;
                         }
                         CAMERA_CONTROLS.target.y = -3;
                         CAMERA_CONTROLS.enabled = true;
@@ -823,10 +824,9 @@
                     light.target = new THREE.Object3D();
                     if (k===0) {
                         light.castShadow = true;
-                        light.shadowBias = 0.0001;
-                        light.shadowDarkness = 0.2;
-                        light.shadowMapWidth = 2048;
-                        light.shadowMapHeight = 2048;
+                        light.shadow.bias = 0.0001;
+                        light.shadow.mapSize.width = 2048;
+                        light.shadow.mapSize.height = 2048;
                     }
                     SCENE.add(light);
                 }
@@ -916,7 +916,7 @@
                 mesh.opacity = 0;
                 SCENE.add(mesh);
                 startTween(function(t) {
-                    mesh.opacity = this.t;
+                    mesh.opacity = t;
                 }, function() {
                     PIECE_MESH_IDS[square] = mesh.id;
                     completeFn();
