@@ -1,5 +1,3 @@
-var flag = window.Int32Array !== undefined;
-console.log(flag);
 $(function() {
     var engine = new Worker("js/lozza.js");
     console.log("GUI: uci");
