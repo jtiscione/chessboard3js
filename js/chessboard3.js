@@ -1,12 +1,10 @@
 /**
- * chessboard3.js version 0.1.0
+ * chessboard3.js version 0.1.2
  *
- * Copyright 2015 Jason Tiscione
+ * Copyright 2016 Jason Tiscione
  * Portions copyright 2013 Chris Oakman
  * Released under MIT license
  * https://github.com/jtiscione/chessboard3js/blob/master/LICENSE
- *
- * Date: 7/1/2015
  */
 ;(function() {
     'use strict';
@@ -28,7 +26,6 @@
         sw1 : 'wK', sw2: 'wQ', sw3: 'wR', sw4: 'wB', sw5: 'wN', sw6: 'wP',
         sb1 : 'bK', sb2: 'bQ', sb3: 'bR', sb4: 'bB', sb5: 'bN', sb6: 'bP'
     };
-    var DEFAULT_WIDTH = 500;
     var ASPECT_RATIO = 0.75;
 
     // ---------------------------------------------------------------------//
@@ -1488,6 +1485,7 @@
                         DRAG_INFO.piece,
                         deepCopy(CURRENT_POSITION),
                         CURRENT_ORIENTATION) === false) {
+                    DRAG_INFO = null;
                     return;
                 }
                 if (validSpareSquare(DRAG_INFO.source)) {
