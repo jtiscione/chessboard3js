@@ -1,6 +1,3 @@
-/**
- * Created by Jason on 6/26/2015.
- */
 $(document).ready(function() {
 
     prettyPrint();
@@ -33,10 +30,12 @@ $(document).ready(function() {
         }
         if (dimensions >= 3) {
             $('#inner').css('width', '600px');
+            $('#inner').css('height', '450px');
             $('#outer').css('padding', '');
             board = new ChessBoard3('inner', sampleConfig);
         } else {
             $('#inner').css('width', '450px');
+            $('#inner').css('height', '450px');
             $('#outer').css('padding', '0px 75px 0px 75px');
             board = new ChessBoard('inner', sampleConfig);
         }

@@ -1,0 +1,126 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #BBBBBB;
+    height: 100%;
+font-family: helvetica Neue, helvetica, sans-serif;
+}
+h1 {
+    text-align: center;
+    font-size: 40px;
+    font-family: helvetica, sans-serif;
+    margin: 5px;
+    padding: 0;
+    position: relative;
+}
+header {
+    text-align: center;
+    font-family: helvetica, sans-serif;
+    margin: 10px;
+}
+
+footer {
+    position: relative;
+    clear: both;
+    background: black;
+    color: white;
+    text-align: left;
+    font-family: helvetica, sans-serif;
+    font-size: 12px;
+    margin: 10px 0 0 0;
+    padding: 10px;
+    height: 32px;
+}
+
+footer a {
+    color: white;
+}
+footer p {
+    margin: 0;
+}
+#container {
+    overflow: hidden;
+    width: 100%;
+position: relative;
+    text-align: center;
+}
+#board {
+    position: relative;
+    margin: 0 auto;
+    display: inline-block;
+}
+#side {
+    font-family: helvetica, sans-serif;
+    padding: 10px;
+    width: 480px;
+    position: relative;
+    margin: 0 auto;
+    display: inline-block;
+    vertical-align: top;
+}
+.buttonpanel {
+    position: relative;
+    text-align: center;
+    margin: 5px;
+}
+.buttonpanel input {
+    width: 50px;
+}
+#status {
+    margin: 5px;
+    font-weight: bolder;
+    text-align: center;
+    color: black;
+    font-size: 15px;
+    position: relative;
+}
+#fen {
+    margin: 5px;
+    padding: 10px;
+    clear: left;
+    color:white;
+    background: black;
+    position: relative;
+    text-align: left;
+    border: 1px solid red;
+    font-weight: lighter;
+    font-size: 10px;
+    overflow-x: visible;
+}
+#optionsBox {
+    text-align: center;
+}
+#pgn {
+    background: black;
+    color: white;
+    height: 300px;
+    width: 130px;
+    padding: 3px;
+    margin: 3px;
+    float:right;
+    position: relative;
+    text-align: left;
+    border: 1px solid red;
+    overflow: auto;
+    font-weight: lighter;
+    font-size: 14px;
+}
+#pgn span {
+    color: gray;
+}
+
+#leftbox {
+    position: relative;
+    float: left;
+}
+#optionsBox {
+    text-align: left;
+}
+
+.vertical-align {
+    position: relative;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}

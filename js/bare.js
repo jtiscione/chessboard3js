@@ -1,5 +1,18 @@
 $(function() {
-    var engine = new Worker("js/lozza.js");
+
+    var engine = null;
+
+    if (typeof(Worker) === undefined) {
+        alert("Web workers not supported.");
+        return;
+    }
+
+    //var workerData = new Blob([document.getElementById('lozza_chess_engine_web_worker').textContent],
+    //    {type: 'text/javascript'});
+    //engine = new Worker(window.URL.createObjectURL(workerData));
+
+    engine = new Worker('js/lozza.js');
+
     console.log("GUI: uci");
     engine.postMessage("uci");
     console.log("GUI: ucinewgame");
@@ -21,12 +34,8 @@ $(function() {
     // true for when the engine is processing; ignore_mouse_events is always true if this is set (also during animations)
     var engineRunning = false;
 
-    // don't let the user press buttons while other button clicks are still processing
-    var board3D = ChessBoard3.webGLEnabled();
-
-    if (!board3D) {
-        swal("WebGL unsupported or disabled.", "Using a 2D board...");
-        $('#dimensionBtn').remove();
+    if (!ChessBoard3.webGLEnabled()) {
+        alert("WebGL unsupported or disabled.");
     }
 
     var scoreGauge = $('#gauge').SonicGauge({
@@ -69,25 +78,18 @@ $(function() {
         var windowWidth = $(window).width();
         var windowHeight = $(window).height();
         var desiredBoardWidth = windowWidth - $('#side').outerWidth(true) - fudge;
-        var desiredBoardHeight = windowHeight - $('#header').outerHeight(true) - $('#banner').outerHeight(true) - $('#footer').outerHeight(true) - fudge;
+        var desiredBoardHeight = windowHeight - $('#header').outerHeight(true) - $('#footer').outerHeight(true) - fudge;
 
         var boardDiv = $('#board');
-        if (board3D) {
-            // Using chessboard3.js.
-            // Adjust for 4:3 aspect ratio
-            desiredBoardWidth &= 0xFFFC; // mod 4 = 0
-            desiredBoardHeight -= (desiredBoardHeight % 3); // mod 3 = 0
-            if (desiredBoardWidth * 0.75 > desiredBoardHeight) {
-                desiredBoardWidth = desiredBoardHeight * 4 / 3;
-            }
-            boardDiv.css('width', desiredBoardWidth);
-            boardDiv.css('height', (desiredBoardWidth * 0.75));
-        } else {
-            // This is a chessboard.js board. Adjust for 1:1 aspect ratio
-            desiredBoardWidth = Math.min(desiredBoardWidth, desiredBoardHeight);
-            boardDiv.css('width', desiredBoardWidth);
-            boardDiv.css('height', desiredBoardHeight);
+        // Using chessboard3.js.
+        // Adjust for 4:3 aspect ratio
+        desiredBoardWidth &= 0xFFFC; // mod 4 = 0
+        desiredBoardHeight -= (desiredBoardHeight % 3); // mod 3 = 0
+        if (desiredBoardWidth * 0.75 > desiredBoardHeight) {
+            desiredBoardWidth = desiredBoardHeight * 4 / 3;
         }
+        boardDiv.css('width', desiredBoardWidth);
+        boardDiv.css('height', (desiredBoardWidth * 0.75));
         if (board !== undefined) {
             board.resize();
         }
@@ -100,7 +102,7 @@ $(function() {
         var msg = "position fen "+game.fen();
         console.log("GUI: "+msg);
         engine.postMessage(msg);
-        msg = 'go movetime ' + $('#moveTime').val();
+        msg = 'go movetime 1000';
         console.log("GUI: "+msg);
         engine.postMessage(msg);
         engine.onmessage = function(event) {
@@ -183,7 +185,7 @@ $(function() {
             } else if (game.in_draw()) {
                 status = "Game over (fifty move rule)."
             }
-            swal({
+            alert({
                 title : "Game Over",
                 text : status,
                 type: 'info',
@@ -210,7 +212,7 @@ $(function() {
             }
         }
 
-        fenEl.html(game.fen().replace(/ /g, '&nbsp;'));
+        fenEl.html("FEN: " + game.fen().replace(/ /g, '&nbsp;'));
         var currentPGN = game.pgn({max_width:10,newline_char:"<br>"});
         var matches = entirePGN.lastIndexOf(currentPGN, 0) === 0;
         if (matches) {
@@ -218,7 +220,7 @@ $(function() {
         } else {
             entirePGN = currentPGN;
         }
-        pgnEl.html(currentPGN);
+        pgnEl.html("PGN:<br>" + currentPGN);
         if (engineRunning) {
             status += ' Thinking...';
         }
@@ -289,7 +291,6 @@ $(function() {
             board.removeGreySquares();
         }
     };
-
     function createBoard(pieceSet) {
         var cfg = {
             cameraControls: true,
@@ -300,20 +301,20 @@ $(function() {
             onMouseoverSquare: onMouseoverSquare,
             onSnapEnd: onSnapEnd
         };
-        if (board3D) {
-            if (pieceSet) {
-                if (pieceSet === 'minions') {
-                    cfg.whitePieceColor = 0xFFFF00;
-                    cfg.blackPieceColor = 0xCC00CC;
-                    cfg.lightSquareColor = 0x888888;
-                    cfg.darkSquareColor = 0x666666;
-                }
-                cfg.pieceSet = 'assets/chesspieces/' + pieceSet + '/{piece}.json';
+        if (pieceSet) {
+            if (pieceSet === 'minions') {
+                cfg.whitePieceColor = 0xFFFF00;
+                cfg.blackPieceColor = 0xCC00CC;
+                cfg.lightSquareColor = 0x888888;
+                cfg.darkSquareColor = 0x666666;
             }
-            return new ChessBoard3('board', cfg);
+            //cfg.pieceSet = 'http://jtiscione.github.io/chessboard3js/assets/chesspieces/' + pieceSet + '/{piece}.json';
+            cfg.pieceSet = 'assets/chesspieces/' + pieceSet + '/{piece}.json';
         } else {
-            return new ChessBoard('board', cfg);
+            //cfg.pieceSet = 'http://jtiscione.github.io/chessboard3js/assets/chesspieces/iconic/{piece}.json';
+            cfg.pieceSet = 'assets/chesspieces/iconic/{piece}.json';
         }
+        return new ChessBoard3('board', cfg);
     }
 
     adjustBoardWidth();
@@ -371,7 +372,7 @@ $(function() {
             var msg = "position fen " + game.fen();
             console.log("GUI: "+msg);
             engine.postMessage(msg);
-            msg = 'go movetime ' + $('#moveTime').val();
+            msg = 'go movetime 1000';
             console.log(msg);
             engine.postMessage(msg);
             engine.onmessage = function (event) {
@@ -405,136 +406,6 @@ $(function() {
         updateStatus();
         setTimeout(fireEngine, 1000);
     });
-
-    $('#dimensionBtn').on('click', function() {
-        var dimBtn = $("#dimensionBtn");
-        dimBtn.prop('disabled', true);
-        var position = board.position();
-        var orientation = board.orientation();
-        board.destroy();
-        board3D = !board3D;
-        adjustBoardWidth();
-        dimBtn.val(board3D? '2D' : '3D');
-        setTimeout(function () {
-            board = createBoard($('#piecesMenu').val());
-            board.orientation(orientation);
-            board.position(position);
-            $("#dimensionBtn").prop('disabled', false);
-        });
-    });
-
-    $("#setFEN").on('click', function(e) {
-        swal({
-            title: "SET FEN",
-            text: "Enter a FEN position below:",
-            type: "input",
-            inputType: "text",
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, function(fen) {
-            if (fen === false) {
-                return; //cancel
-            }
-            fen = fen.trim();
-            console.log(fen);
-            var fenCheck = game.validate_fen(fen);
-            console.log("valid: "+fenCheck.valid);
-            if (fenCheck.valid) {
-                game = new Chess(fen);
-                console.log("GUI: ucinewgame");
-                engine.postMessage('ucinewgame');
-                console.log("GUI: position fen " + fen);
-                engine.postMessage('position fen '+ fen);
-                board.position(fen);
-                fenEl.val(fen);
-                pgnEl.empty();
-                updateStatus();
-                swal("Success", "FEN parsed successfully.", "success");
-            } else {
-                console.log(fenCheck.error);
-                swal.showInputError("ERROR: "+fenCheck.error);
-                return false;
-            }
-        });
-    });
-
-    $("#setPGN").on('click', (function(e) {
-        swal({
-            title: "SET PGN",
-            text: "Enter a game PGN below:",
-            type: "input",
-            inputType: "text",
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, function(pgn) {
-            if (pgn === false) {
-                return; // cancel
-            }
-            pgn = pgn.trim();
-            console.log(pgn);
-            var pgnGame = new Chess();
-            if (pgnGame.load_pgn(pgn)) {
-                game = pgnGame;
-                var fen = game.fen();
-                console.log("GUI: ucinewgame");
-                engine.postMessage('ucinewgame');
-                console.log("GUI: position fen " + fen);
-                engine.postMessage('position fen ' + game.fen());
-                board.position(fen, false);
-                fenEl.val(game.fen());
-                pgnEl.empty();
-                moveList = game.history();
-                scoreList = [];
-                for (var i = 0; i < moveList.length; i++) {
-                    scoreList.push(0);
-                }
-                cursor = moveList.length;
-                updateStatus();
-                swal("Success", "PGN parsed successfully.", "success");
-            } else {
-                swal.showInputError("PGN not valid.");
-                return false;
-            }
-        });
-    }));
-
-    $("#resetBtn").on('click', function(e) {
-        player = 'w';
-        game = new Chess();
-        fenEl.empty();
-        pgnEl.empty();
-        largestPGN = '';
-        moveList = [];
-        scoreList = [];
-        cursor = 0;
-        board.start();
-        board.orientation('white');
-        console.log("GUI: ucinewgame");
-        engine.postMessage('ucinewgame');
-        updateScoreGauge(0);
-    });
-
-    $("#engineMenu").change(function() {
-       console.log($("#engineMenu").val());
-        if (engine) {
-            var jsURL = $("#engineMenu").val();
-            engine.terminate();
-            engine = new Worker(jsURL);
-            console.log("GUI: uci");
-            engine.postMessage('uci');
-            console.log("GUI: ucinewgame");
-            engine.postMessage('ucinewgame');
-            updateScoreGauge(0); // they each act a little differently
-            if (jsURL.match(/p4wn/)) {
-                swal('Using the tiny p4wn engine, which plays at an amateur level.');
-            } else if (jsURL.match(/lozza/)) {
-                swal('Using Lozza engine by Colin Jerkins, estimated rating 2340.')
-            } else if (jsURL.match(/stockfish/)) {
-                swal("Using stockfish engine, estimated rating > 3000.");
-            }
-        }
-    });
-
     $('#piecesMenu').change(function() {
         var fen = board.position();
         board.destroy();
@@ -545,4 +416,3 @@ $(function() {
 
     updateStatus();
 });
-

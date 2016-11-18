@@ -1,12 +1,10 @@
 /**
- * chessboard3.js version 0.1.0
+ * chessboard3.js version 0.1.2
  *
- * Copyright 2015 Jason Tiscione
+ * Copyright 2016 Jason Tiscione
  * Portions copyright 2013 Chris Oakman
  * Released under MIT license
  * https://github.com/jtiscione/chessboard3js/blob/master/LICENSE
- *
- * Date: 7/1/2015
  */
 ;(function() {
     'use strict';
@@ -29,6 +27,39 @@
         sb1 : 'bK', sb2: 'bQ', sb3: 'bR', sb4: 'bB', sb5: 'bN', sb6: 'bP'
     };
     var ASPECT_RATIO = 0.75;
+
+    // ---------------------------------------------------------------------//
+    //                               ANIMATION                              //
+    // ---------------------------------------------------------------------//
+
+    var executingTweens = [];
+
+    function startTween(onUpdate, onComplete, duration) {
+        executingTweens.push({
+            onUpdate: onUpdate,
+            onComplete: onComplete,
+            duration: duration,
+            started: window.performance.now()
+        });
+        onUpdate(0);
+    }
+
+    // invoke frequently
+    function updateAllTweens() {
+        var tweenArray = [];
+        executingTweens.forEach(function(tween) {
+            var rightNow = window.performance.now();
+            var t = (rightNow - tween.started) / tween.duration;
+            if (t < 1) {
+                tween.onUpdate(t);
+                tweenArray.push(tween);
+            } else {
+                tween.onUpdate(1.0);
+                tween.onComplete();
+            }
+        });
+        executingTweens = tweenArray;
+    }
 
     // ---------------------------------------------------------------------//
     //                               UTILITIES                              //
@@ -237,6 +268,8 @@
             var START_POSITION = fenToObj(START_FEN);
 
             var containerEl;
+            var addedToContainer = false;
+
             var widget = {};
 
             var RENDERER, SCENE, LABELS, CAMERA, CAMERA_CONTROLS;
@@ -374,13 +407,6 @@
                     console.log("ChessBoard3 Error 3006: Unable to find three.js revision 71 or greater. \n\nExiting...");
                     return false;
                 }
-                if (!window.JSON ||
-                    typeof JSON.stringify !== 'function' ||
-                    typeof JSON.parse !== 'function') {
-                    window.alert('ChessBoard3 Error 1004: JSON does not exist in this browser. ' +
-                        'Please include a JSON polyfill.\n\nExiting...');
-                    return false;
-                }
                 if (!webGLEnabled()) {
                     window.alert("ChessBoard3 Error 3001: WebGL is not enabled.\n\nExiting...");
                     return false;
@@ -434,6 +460,10 @@
 
                 if (cfg.showNotation !== false) {
                     cfg.showNotation = true;
+                    if (cfg.hasOwnProperty('fontData') !== true ||
+                        (typeof cfg.fontData !== 'string' && typeof cfg.fontData !== 'function')) {
+                        cfg.fontData = 'assets/fonts/helvetiker_regular.typeface.json';
+                    }
                 }
 
                 if (cfg.draggable !== true) {
@@ -554,9 +584,6 @@
                     transparent: true
                 });
 
-                RENDERER.shadowMapEnabled = true;
-                RENDERER.shadowMapType = THREE.PCFSoftShadowMap;
-
                 var backgroundColor;
                 if (cfg.hasOwnProperty('backgroundColor') && typeof cfg.backgroundColor === 'number') {
                     backgroundColor = cfg.backgroundColor;
@@ -566,7 +593,6 @@
                 RENDERER.setClearColor(backgroundColor, 1);
 
                 RENDERER.setSize(containerEl.clientWidth, Math.round(containerEl.clientWidth * ASPECT_RATIO));
-                containerEl.appendChild(RENDERER.domElement);
 
                 SCENE = new THREE.Scene();
                 //SCENE.add(new THREE.AxisHelper(3));
@@ -595,15 +621,19 @@
 
 
                 if ('ontouchstart' in document.documentElement) {
-                    RENDERER.domElement.addEventListener('touchstart', mouseDown, true);
-                    RENDERER.domElement.addEventListener('touchmove', mouseMove, true);
+                    RENDERER.domElement.addEventListener('touchstart', function(e) {
+                        mouseDown(e, true);
+                    }, true);
+                    RENDERER.domElement.addEventListener('touchmove', function(e) {
+                        mouseMove(e, true);
+                    }, true);
                     RENDERER.domElement.addEventListener('touchend', mouseUp, true);
                 }
 
                 if (cfg.rotateControls || cfg.zoomControls) {
                     if (THREE.OrbitControls !== undefined) {
                         CAMERA_CONTROLS = new THREE.OrbitControls(CAMERA, RENDERER.domElement, RENDERER.domElement);
-                        CAMERA_CONTROLS.noPan = true;
+                        CAMERA_CONTROLS.enablePan = false;
                         if (cfg.rotateControls) {
                             CAMERA_CONTROLS.minPolarAngle = Math.PI / 2 * 0.1;
                             CAMERA_CONTROLS.maxPolarAngle = Math.PI / 2 * 0.8;
@@ -613,8 +643,9 @@
                         if (cfg.zoomControls) {
                             CAMERA_CONTROLS.minDistance = 12;
                             CAMERA_CONTROLS.maxDistance = 22;
+                            CAMERA_CONTROLS.enableZoom = true;
                         } else {
-                            CAMERA_CONTROLS.noZoom = true;
+                            CAMERA_CONTROLS.enableZoom = false;
                         }
                         CAMERA_CONTROLS.target.y = -3;
                         CAMERA_CONTROLS.enabled = true;
@@ -651,25 +682,14 @@
                     RENDER_FLAG = true;
                 };
 
-                if (window.TWEEN !== undefined && typeof TWEEN === 'object') {
-                    // interpolate: startingTheta -> targetTheta and startY -> targetY
-                    var tween = new TWEEN.Tween({t: 0})
-                        .to({t: 1}, 1000)
-                        //.easing(TWEEN.Easing.Elastic.InOut)
-                        .onUpdate(function() {
-                            var t = this.t;
-                            var theta = startTheta + t * (targetTheta - startTheta);
-                            var r = startRadius + t * (targetRadius - startRadius);
-                            CAMERA.position.set(r * Math.cos(theta),
-                                startY + t * (targetY - startY),
-                                r * Math.sin(theta));
-                            CAMERA.lookAt(new THREE.Vector3(0,-3,0));
-                        })
-                        .onComplete(end);
-                    tween.start();
-                } else {
-                    end(); // tween.js not available
-                }
+                startTween(function(t) {
+                    var theta = startTheta + t * (targetTheta - startTheta);
+                    var r = startRadius + t * (targetRadius - startRadius);
+                    CAMERA.position.set(r * Math.cos(theta),
+                        startY + t * (targetY - startY),
+                        r * Math.sin(theta));
+                    CAMERA.lookAt(new THREE.Vector3(0, -3, 0));
+                }, end, 1000);
             }
 
             function buildPieceMesh(square, piece) {
@@ -698,52 +718,46 @@
                 return mesh;
             }
 
-            function buildBoard() {
-                var i;
-                for (i = 0; i < 8; i++) {
-                    var tz = 3.5 * SQUARE_SIZE - (SQUARE_SIZE * i);
-                    for (var j = 0; j < 8; j++) {
-                        var tx = (SQUARE_SIZE * j) - 3.5 * SQUARE_SIZE;
-                        var square = 'abcdefgh'.charAt(j) + (i + 1);
-                        var squareMaterial = (((i % 2) === 0) ^ ((j % 2) === 0) ? lightSquareMaterial : darkSquareMaterial);
-                        var squareGeometry = new THREE.BoxGeometry(2, 0.5, 2);
-                        var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial);
-                        squareMesh.position.set(tx, -0.25, tz);
-                        squareGeometry.computeVertexNormals();
-                        squareGeometry.computeFaceNormals();
-                        squareGeometry.computeTangents();
-                        squareMesh.receiveShadow = true;
-                        SQUARE_MESH_IDS[square] = squareMesh.id;
-                        squareMesh.tag = square;
-                        SCENE.add(squareMesh);
-                    }
+            function addLabelsToScene() {
+
+                var loader = new THREE.FontLoader();
+
+                var url = null;
+                if (typeof cfg.fontData === 'function') {
+                    url = cfg.fontData();
+                } else if (typeof cfg.fontData === 'string') {
+                    url = cfg.fontData;
                 }
 
-                // Add the file / rank labels
-                var opts = {
-                    size: 0.5,
-                    height: 0.0,
-                    weight: 'normal',
-                    font: 'helvetiker',
-                    style: 'normal',
-                    curveSegments: 12,
-                    steps: 1
-                };
+                if (url === null) {
+                    cfg.showNotation = false;
+                    error(2354, e);
+                }
 
-                LABELS = [];
-                if (cfg.showNotation) {
+                loader.load(url, function(font) {
+
+                    // Add the file / rank labels
+                    var opts = {
+                        font: font,
+                        size: 0.5,
+                        height: 0.0,
+                        weight: 'normal',
+                        style: 'normal',
+                        curveSegments: 12,
+                        steps: 1,
+                        bevelEnabled: false,
+                        material: 0,
+                        extrudeMaterial: 1
+                    };
+
+                    LABELS = [];
                     var textGeom;
                     var label;
                     var columnLabelText = "abcdefgh".split('');
-                    for (i = 0; i < 8; i++) {
-                        try {
-                            textGeom = new THREE.TextGeometry(columnLabelText[i], opts);
-                        }
-                        catch (e) {
-                            cfg.showNotation = false;
-                            error(2354, e);
-                            break;
-                        }
+                    for (var i = 0; i < 8; i++) {
+                        textGeom = new THREE.TextGeometry(columnLabelText[i], opts);
+                        textGeom.computeBoundingBox();
+                        textGeom.computeVertexNormals();
                         label = new THREE.Mesh(textGeom, RANK_1_TEXT_MATERIAL);
                         label.position.x = 2 * i - 7 - opts.size/2;
                         label.position.y = -0.5;
@@ -757,25 +771,47 @@
                         LABELS.push(label);
                         SCENE.add(label);
                     }
-                    if (LABELS.length > 0) {
-                        // no issue with missing font file
-                        var rankLabelText = "12345678".split('');
-                        for (i = 0; i < 8; i++) {
-                            textGeom = new THREE.TextGeometry(rankLabelText[i], opts);
-                            label = new THREE.Mesh(textGeom, FILE_A_TEXT_MATERIAL);
-                            label.position.x = -9;
-                            label.position.y = -0.5;
-                            label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
-                            LABELS.push(label);
-                            SCENE.add(label);
-                            label = new THREE.Mesh(textGeom, FILE_H_TEXT_MATERIAL);
-                            label.position.x = 9;
-                            label.position.y =  -0.5;
-                            label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
-                            LABELS.push(label);
-                            SCENE.add(label);
-                        }
+                    var rankLabelText = "12345678".split('');
+                    for (i = 0; i < 8; i++) {
+                        textGeom = new THREE.TextGeometry(rankLabelText[i], opts);
+                        label = new THREE.Mesh(textGeom, FILE_A_TEXT_MATERIAL);
+                        label.position.x = -9;
+                        label.position.y = -0.5;
+                        label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
+                        LABELS.push(label);
+                        SCENE.add(label);
+                        label = new THREE.Mesh(textGeom, FILE_H_TEXT_MATERIAL);
+                        label.position.x = 9;
+                        label.position.y =  -0.5;
+                        label.position.z = -7 - opts.size / 2 + 2 * (7 - i);
+                        LABELS.push(label);
+                        SCENE.add(label);
                     }
+                });
+            }
+
+            function buildBoard() {
+                var i;
+                for (i = 0; i < 8; i++) {
+                    var tz = 3.5 * SQUARE_SIZE - (SQUARE_SIZE * i);
+                    for (var j = 0; j < 8; j++) {
+                        var tx = (SQUARE_SIZE * j) - 3.5 * SQUARE_SIZE;
+                        var square = 'abcdefgh'.charAt(j) + (i + 1);
+                        var squareMaterial = (((i % 2) === 0) ^ ((j % 2) === 0) ? lightSquareMaterial : darkSquareMaterial);
+                        var squareGeometry = new THREE.BoxGeometry(2, 0.5, 2);
+                        var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial.clone());
+                        squareMesh.position.set(tx, -0.25, tz);
+                        squareGeometry.computeFaceNormals();
+                        squareGeometry.computeVertexNormals();
+                        squareMesh.receiveShadow = true;
+                        SQUARE_MESH_IDS[square] = squareMesh.id;
+                        squareMesh.tag = square;
+                        SCENE.add(squareMesh);
+                    }
+                }
+
+                if (cfg.showNotation) {
+                    addLabelsToScene();
                 }
 
                 for (var k = 0; k < LIGHT_POSITIONS.length; k++) {
@@ -785,10 +821,9 @@
                     light.target = new THREE.Object3D();
                     if (k===0) {
                         light.castShadow = true;
-                        light.shadowBias = 0.0001;
-                        light.shadowDarkness = 0.2;
-                        light.shadowMapWidth = 2048;
-                        light.shadowMapHeight = 2048;
+                        light.shadow.bias = 0.0001;
+                        light.shadow.mapSize.width = 2048;
+                        light.shadow.mapSize.height = 2048;
                     }
                     SCENE.add(light);
                 }
@@ -843,24 +878,18 @@
                 if (destSquareMesh && pieceMesh) {
                     var tx_src = pieceMesh.position.x, tz_src = pieceMesh.position.z;
                     var tx_dest = destSquareMesh.position.x, tz_dest = destSquareMesh.position.z;
-                    var tween = new TWEEN.Tween({t: 0})
-                        .to({t: 1}, cfg.moveSpeed)
-                        //.easing(TWEEN.Easing.Elastic.InOut)
-                        .onUpdate(function() {
-                            var t = this.t;
-                            pieceMesh.position.x = tx_src + t * (tx_dest - tx_src);
-                            pieceMesh.position.z = tz_src + t * (tz_dest - tz_src);
-                        })
-                        .onComplete(function() {
-                            PIECE_MESH_IDS[dest] = pieceMesh.id;
-                            if (validOrdinarySquare(src)) {
-                                if (pieceMesh.id === PIECE_MESH_IDS[src]) {
-                                    delete PIECE_MESH_IDS[src];
-                                }
+                    startTween(function(t) {
+                        pieceMesh.position.x = tx_src + t * (tx_dest - tx_src);
+                        pieceMesh.position.z = tz_src + t * (tz_dest - tz_src);
+                    }, function() {
+                        PIECE_MESH_IDS[dest] = pieceMesh.id;
+                        if (validOrdinarySquare(src)) {
+                            if (pieceMesh.id === PIECE_MESH_IDS[src]) {
+                                delete PIECE_MESH_IDS[src];
                             }
-                            completeFn();
-                        });
-                    tween.start();
+                        }
+                        completeFn();
+                    }, cfg.moveSpeed);
                 }
             }
 
@@ -868,16 +897,13 @@
                 if (PIECE_MESH_IDS.hasOwnProperty(square)) {
                     if (validOrdinarySquare(square) && PIECE_MESH_IDS.hasOwnProperty(square)) {
                         var mesh = SCENE.getObjectById(PIECE_MESH_IDS[square]);
-                        var tween = new TWEEN.Tween({t: 1})
-                            .to({t: 0}, cfg.trashSpeed)
-                            .onUpdate(function() {
-                                mesh.opacity = this.t;
-                            }).onComplete(function(){
-                                SCENE.remove(mesh);
-                                delete PIECE_MESH_IDS[square];
-                                completeFn();
-                            });
-                        tween.start();
+                        startTween(function(t) {
+                            mesh.opacity = 1 - t;
+                        }, function() {
+                            SCENE.remove(mesh);
+                            delete PIECE_MESH_IDS[square];
+                            completeFn();
+                        }, cfg.trashSpeed);
                     }
                 }
             }
@@ -886,14 +912,12 @@
                 var mesh = buildPieceMesh(square, piece);
                 mesh.opacity = 0;
                 SCENE.add(mesh);
-                var tween = new TWEEN.Tween({t: 0}).to({t: 1}, cfg.appearSpeed)
-                    .onUpdate(function() {
-                        mesh.opacity = this.t;
-                    }).onComplete(function() {
-                        PIECE_MESH_IDS[square] = mesh.id;
-                        completeFn();
-                    });
-                tween.start();
+                startTween(function(t) {
+                    mesh.opacity = t;
+                }, function() {
+                    PIECE_MESH_IDS[square] = mesh.id;
+                    completeFn();
+                }, cfg.appearSpeed);
             }
 
             function doAnimations(a, oldPos, newPos) {
@@ -1298,20 +1322,10 @@
                         ANIMATION_HAPPENING = false;
                         RENDER_FLAG = true;
                     };
-                    if (window.TWEEN !== undefined && typeof TWEEN === 'object') {
-                        var tween = new TWEEN.Tween({t: 0})
-                            .to({t: 1}, 100)
-                            //.easing(TWEEN.Easing.Elastic.InOut)
-                            .onUpdate(function() {
-                                var t = this.t;
-                                DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
-                                DRAG_INFO.mesh.position.z = tz_start + t * (tz_target - tz_start);
-                            })
-                            .onComplete(end);
-                        tween.start();
-                    } else {
-                        end(); // tween.js not available
-                    }
+                    startTween(function(t) {
+                        DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
+                        DRAG_INFO.mesh.position.z = tz_start + t * (tz_target - tz_start);
+                    }, end, 100);
                 }
             }
 
@@ -1471,6 +1485,7 @@
                         DRAG_INFO.piece,
                         deepCopy(CURRENT_POSITION),
                         CURRENT_ORIENTATION) === false) {
+                    DRAG_INFO = null;
                     return;
                 }
                 if (validSpareSquare(DRAG_INFO.source)) {
@@ -1693,7 +1708,7 @@
                 }
 
                 var doDrawing = function() {
-                    if (useAnimation === true && window.TWEEN !== undefined && typeof TWEEN === 'object') {
+                    if (useAnimation) {
                         var anims = calculateAnimations(CURRENT_POSITION, position);
                         doAnimations(anims, CURRENT_POSITION, position); // invokes setCurrentPosition() from a callback
                     } else {
@@ -1722,15 +1737,11 @@
 
             widget.resize = function() {
                 var w = containerEl.clientWidth;
-                w &= 0xFFFC; // shrink to mod 4
-                var h = w * ASPECT_RATIO;
-                containerEl.style.width = w;
-                containerEl.style.height = h;
                 if (CAMERA) {
                     CAMERA.updateProjectionMatrix();
                 }
                 if (RENDERER) {
-                    RENDERER.setSize(containerEl.clientWidth, containerEl.clientHeight);
+                    RENDERER.setSize(w, w * ASPECT_RATIO);
                 }
                 RENDER_FLAG = true;
             };
@@ -1747,18 +1758,24 @@
             //                            BROWSER EVENTS                            //
             // ---------------------------------------------------------------------//
 
-            function offset(e) {
+            function offset(e, useTouchObject) {
                 var target = e.target || e.srcElement,
-                    rect = target.getBoundingClientRect(),
+                    rect = target.getBoundingClientRect();
+                var offsetX, offsetY;
+                if (useTouchObject && e.touches.length > 0) {
+                    offsetX = e.touches[0].clientX - rect.left;
+                    offsetY = e.touches[0].clientY - rect.top;
+                } else {
                     offsetX = e.clientX - rect.left,
                     offsetY = e.clientY - rect.top;
+                }
                 return {
                     x: offsetX,
                     y: offsetY
                 };
             }
 
-            function mouseDown(e) {
+            function mouseDown(e, useTouchObject) {
                 e.preventDefault();
                 if (DRAG_INFO) {
                     return;
@@ -1766,7 +1783,7 @@
                 if (!cfg.draggable) {
                     return;
                 }
-                var coords = offset(e);
+                var coords = offset(e, useTouchObject);
                 var dragged = raycast(coords.x, coords.y);
                 if (dragged && dragged.piece !== undefined) {
                     DRAG_INFO = dragged;
@@ -1779,9 +1796,9 @@
                 }
             }
 
-            function mouseMove(e) {
+            function mouseMove(e, useTouchObject) {
                 e.preventDefault();
-                var coords = offset(e);
+                var coords = offset(e, useTouchObject);
                 if (DRAG_INFO) {
                     updateDraggedPiece(coords.x, coords.y);
                 } else {
@@ -1872,11 +1889,6 @@
                     expandConfig() !== true) {
                     return;
                 }
-                var pxWidth = parseInt(containerEl.style.width.replace(/px/, ''));
-                var pxHeight = parseInt(containerEl.style.height.replace(/px/, ''));
-
-                containerEl.style.height = Math.max(pxHeight, pxWidth * 3 / 4).toString() + "px";
-
                 widget.resize();
                 prepareScene();
                 buildBoard();
@@ -1899,9 +1911,7 @@
 
                 function animate() {
                     requestAnimationFrame(animate);
-                    if (window.TWEEN !== undefined && typeof window.TWEEN === 'object') {
-                        TWEEN.update();
-                    }
+                    updateAllTweens();
                     var cameraPosition = CAMERA.position.clone();
                     if (CAMERA_CONTROLS && CAMERA_CONTROLS.enabled) {
                         CAMERA_CONTROLS.update();
@@ -1939,12 +1949,19 @@
                     }
                     if (RENDER_FLAG || DRAG_INFO !== null || ANIMATION_HAPPENING || cameraMoved) {
                         var goahead = true;
-                        if (cfg.hasOwnProperty('onRender') && typeof cfg.onReady === 'function') {
+                        if (cfg.hasOwnProperty('onRender') && typeof cfg.onRender === 'function') {
                             if (cfg.onRender(SCENE, deepCopy(SQUARE_MESH_IDS), deepCopy(PIECE_MESH_IDS), deepCopy(CURRENT_POSITION)) === false) {
                                 goahead = false;
                             }
                         }
                         if (goahead) {
+                            if (!addedToContainer) {
+                                while (containerEl.firstChild) {
+                                    containerEl.removeChild(containerEl.firstChild);
+                                }
+                                containerEl.appendChild(RENDERER.domElement);
+                                addedToContainer = true;
+                            }
                             RENDERER.render(SCENE, CAMERA);
                             RENDER_FLAG = false;
                         } else {
