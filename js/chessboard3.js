@@ -1197,6 +1197,10 @@
                     }
                     var pieceMesh = SCENE.getObjectById(PIECE_MESH_IDS[sq]);
                     piece = pieceOnSquare(sq);
+                    if (!piece) {
+                        // Something is out of sync...
+                        return null;
+                    }
                     var pieceBoundingBox = GEOMETRIES[piece.charAt(1)].boundingBox.clone();
                     pieceBoundingBox.min.x += pieceMesh.position.x;
                     pieceBoundingBox.max.x += pieceMesh.position.x;
@@ -1813,7 +1817,7 @@
                     if (callOut || callOver) {
                         var currentSquare = raycast(coords.x, coords.y).source;
                         var currentPosition = deepCopy(CURRENT_POSITION);
-                        if (currentSquare !== MOUSEOVER_SQUARE) {
+                        if (currentSquare && currentSquare !== MOUSEOVER_SQUARE) {
                             var piece;
                             if (callOut && validOrdinarySquare(MOUSEOVER_SQUARE)) {
                                 piece = false;
