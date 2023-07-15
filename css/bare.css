@@ -87,9 +87,6 @@ position: relative;
     font-size: 10px;
     overflow-x: visible;
 }
-#optionsBox {
-    text-align: center;
-}
 #pgn {
     background: black;
     color: white;
@@ -114,7 +111,7 @@ position: relative;
     float: left;
 }
 #optionsBox {
-    text-align: left;
+    text-align: right;
 }
 
 .vertical-align {

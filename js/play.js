@@ -1,5 +1,5 @@
 $(function() {
-    var engine = new Worker("js/lozza.js");
+    var engine = new Worker("js/stockfish.js");
     console.log("GUI: uci");
     engine.postMessage("uci");
     console.log("GUI: ucinewgame");
