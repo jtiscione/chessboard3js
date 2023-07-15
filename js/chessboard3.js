@@ -487,7 +487,7 @@
                 if (cfg.hasOwnProperty('pieceSet') !== true ||
                     (typeof cfg.pieceSet !== 'string' &&
                     typeof cfg.pieceSet !== 'function')) {
-                    cfg.pieceSet = 'assets/chesspieces/iconic/{piece}.json';
+                    cfg.pieceSet = 'assets/chesspieces/classic/{piece}.json';
                 }
 
                 // rotate and zoom controls
@@ -1195,6 +1195,10 @@
                     if (!PIECE_MESH_IDS.hasOwnProperty(sq)) {
                         continue;
                     }
+                    piece = PIECE_MESH_IDS[sq];
+                    if (!piece) {
+                        continue;
+                    }
                     var pieceMesh = SCENE.getObjectById(PIECE_MESH_IDS[sq]);
                     piece = pieceOnSquare(sq);
                     var pieceBoundingBox = GEOMETRIES[piece.charAt(1)].boundingBox.clone();
@@ -1811,9 +1815,10 @@
                         callOver = cfg.onMouseoverSquare;
                     }
                     if (callOut || callOver) {
-                        var currentSquare = raycast(coords.x, coords.y).source;
+                        var rc = raycast(coords.x, coords.y).source;
                         var currentPosition = deepCopy(CURRENT_POSITION);
-                        if (currentSquare !== MOUSEOVER_SQUARE) {
+                        if (rc && rc.source && rc.source !== MOUSEOVER_SQUARE) {
+                            var currentSquare = rc.source;
                             var piece;
                             if (callOut && validOrdinarySquare(MOUSEOVER_SQUARE)) {
                                 piece = false;

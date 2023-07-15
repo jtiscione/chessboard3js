@@ -311,8 +311,8 @@ $(function() {
             //cfg.pieceSet = 'http://jtiscione.github.io/chessboard3js/assets/chesspieces/' + pieceSet + '/{piece}.json';
             cfg.pieceSet = 'assets/chesspieces/' + pieceSet + '/{piece}.json';
         } else {
-            //cfg.pieceSet = 'http://jtiscione.github.io/chessboard3js/assets/chesspieces/iconic/{piece}.json';
-            cfg.pieceSet = 'assets/chesspieces/iconic/{piece}.json';
+            //cfg.pieceSet = 'http://jtiscione.github.io/chessboard3js/assets/chesspieces/classic/{piece}.json';
+            cfg.pieceSet = 'assets/chesspieces/classic/{piece}.json';
         }
         return new ChessBoard3('board', cfg);
     }
