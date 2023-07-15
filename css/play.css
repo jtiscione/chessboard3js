@@ -12,6 +12,7 @@
 #side {
     font-family: helvetica, sans-serif;
     padding: 10px;
+    width: 480px;
     position: relative;
     margin: 0 auto;
     display: inline-block;
