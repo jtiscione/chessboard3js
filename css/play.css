@@ -66,21 +66,19 @@
     height: 260px;
 }
 .littleButton {
-    box-shadow: 0px 1px 0px 0px #fff6af;
-    background:linear-gradient(to bottom, #ffec64 5%, #ffab23 100%);
+    background: #ffec64;
     font-size: 70%;
     margin: 10px;
 }
 
 .littleButton:hover {
-    background:linear-gradient(to bottom, #ffab23 5%, #ffec64 100%);
+    background: #ffeeee;
 }
 
 select {
+    background: #ffeeee;
     width: 77px;
     margin: 5px;
-    border: 2px solid gray;
-    background:linear-gradient(to bottom, #ffec64 25%, #ffab23 100%);
 }
 
 #pgnBox span {
@@ -95,8 +93,9 @@ select {
 }
 
 .yellowButton {
-    box-shadow: 0px 1px 0px 0px #fff6af;
-    background:linear-gradient(to bottom, #ffec64 5%, #ffab23 100%);
+    /* box-shadow: 0px 1px 0px 0px #fff6af; */
+    background: #ffec64;
+    /* background:linear-gradient(to bottom, #ffec64 5%, #ffab23 100%); */
     border-radius:6px;
     border:1px solid #ffaa22;
     display:inline-block;
@@ -112,7 +111,8 @@ select {
 }
 
 .yellowButton:hover {
-    background:linear-gradient(to bottom, #ffab23 5%, #ffec64 100%);
+    background: #ffeeee;
+    /* background:linear-gradient(to bottom, #ffab23 5%, #ffec64 100%); */
 }
 
 .yellowButton:active {
